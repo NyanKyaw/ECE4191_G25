@@ -36,10 +36,11 @@ class CustomRobot:
 
         # Model Params
             # Calibration
-
+        self.distance_per_step = kwargs['distance_per_step']
+        
         self.robot = Robot(left=self.left_motor_pins, right=self.right_motor_pins, pwm=True)
 
-    def set_velocity(self, velocity=[0,0], duration=None): 
+    def drive_robot(self, velocity=[0,0], duration=None): 
         '''
         Function to set Robot's velocity.
 
@@ -48,34 +49,36 @@ class CustomRobot:
         - time: Time in seconds to apply velocity
         '''
         start_time = time.time()
-        while (time.time() - start_time) < duration:
-            # Driving Forward
+        time_interval = 0
+        init_left_steps = self.left_encoder.steps
+        init_right_steps = self.right_encoder.steps
+        while (time_interval) < duration:
             if velocity[0] > 0 and velocity[1] == 0: # Forward
-                self.left_motor_pins[0].start(velocity[0]) # [0] is PWM1, [1] is PWM2
-                self.right_motor_pins[0].start(velocity[0])
-                self.left_motor_pins[1].start(0)
-                self.right_motor_pins[1].start(0)
+                self.robot.forward()
             elif velocity[0] < 0 and velocity[1] == 0: # Backwards
-                self.left_motor_pins[0].start(0) # [0] is PWM1, [1] is PWM2
-                self.right_motor_pins[0].start(0)
-                self.left_motor_pins[1].start(velocity[0])
-                self.right_motor_pins[1].start(velocity[0])
+                self.robot.backwards()
             elif velocity[0] == 0 and velocity[1] > 0: # Right
-                self.left_motor_pins[0].start(velocity[1]) # [0] is PWM1, [1] is PWM2
-                self.right_motor_pins[0].start(0)
-                self.left_motor_pins[1].start(0)
-                self.right_motor_pins[1].start(velocity[1])
+                self.robot.right()
             elif velocity[0] == 0 and velocity[1] < 0: # Left
-                self.left_motor_pins[0].start(0) # [0] is PWM1, [1] is PWM2
-                self.right_motor_pins[0].start(velocity[1])
-                self.left_motor_pins[1].start(velocity[1])
-                self.right_motor_pins[1].start(0)
-        
-        # Stop
-        self.left_motor_pins[0].start(0) # [0] is PWM1, [1] is PWM2
-        self.right_motor_pins[0].start(0)
-        self.left_motor_pins[1].start(0)
-        self.right_motor_pins[1].start(0)
+                self.robot.left()
+            
+            time_interval = time.time() - start_time
+            left_steps = self.right_encoder.steps
+            right_steps = self.right_encoder.steps
+            left_speed, right_speed, left_distance, right_distance = self.compute_velocity(time_interval, left_steps=abs(left_steps-init_left_steps), right_steps=abs(right_steps-init_right_steps))
+            print(left_speed, right_speed)
+
+        self.robot.stop()
+
+    def compute_velocity_distance(self, time_interval, left_steps, right_steps):
+        """Compute the speed given the number of steps and the time interval."""
+        # Assuming 1 step corresponds to 1 rotation -> isn't it 48 steps per rotation?
+        left_distance = left_steps * self.distance_per_step
+        right_distance = right_steps * self.distance_per_step
+        left_speed = left_distance / time_interval
+        right_speed = right_distance / time_interval
+        return left_speed, right_speed, left_distance, right_distance
+
 
 
 
