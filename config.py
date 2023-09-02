@@ -1,4 +1,5 @@
 ### Define Global Configs ###
+# Can also just use an enum class #
 
 ### MOTOR PINS - Old Driver ###
 # Define control pins for left motor
@@ -29,3 +30,10 @@ Left_PWM = 22
 Right_IN3 = 24
 Right_IN4 = 25
 Right_PWM = 23
+
+# Encoder Pins
+Left_ENCA = 5
+Left_ENCB = 6
+
+Right_ENCA = 16
+Right_ENCB = 26
