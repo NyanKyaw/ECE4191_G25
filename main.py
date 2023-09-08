@@ -14,7 +14,7 @@ left_motor_pins = (config.Left_IN1, config.Left_IN2, config.Left_PWM)
 #right_motor_pins = (config.MR_PWM1, config.MR_PWM2)
 right_motor_pins = (config.Right_IN3, config.Right_IN4, config.Right_PWM)
 
-#left_encoder_pins = (config.ML_ENCA, config.ML_ENCB)
+left_encoder_pins = (config.Left_ENCA, config.Left_ENCB)
 right_encoder_pins = (config.Right_ENCA, config.Right_ENCB)
 
 ### Robot Params ###
@@ -28,8 +28,12 @@ GPIO.setup(config.Right_IN3, GPIO.OUT)
 GPIO.setup(config.Right_IN4, GPIO.OUT)
 GPIO.setup(config.Left_PWM, GPIO.OUT)
 GPIO.setup(config.Right_PWM, GPIO.OUT)
-#GPIO.setup(config.Right_ENCA, GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
-#GPIO.setup(config.Right_ENCB, GPIO.IN,pull_up_down=GPIO.PUD_DOWN)
+GPIO.setup(config.Right_ENCA, GPIO.IN)
+GPIO.setup(config.Right_ENCB, GPIO.IN)
+
+# GPIO.setup(config.Right_ENCB, GPIO.OUT)
+# GPIO.output(config.Right_ENCB, GPIO.HIGH)
+# time.sleep(10)
 
 # rightA_count = 0
 # rightB_count=0
@@ -50,30 +54,42 @@ GPIO.setup(config.Right_PWM, GPIO.OUT)
 pwm1 = GPIO.PWM(config.Left_PWM, 1000)
 pwm2 = GPIO.PWM(config.Right_PWM, 1000)
 
+
+
 def drive(LW_dist, RW_dist, customRobot):
-    speed = 21.9
+    speed =15
+    distance_for_10_input = 3
+    scaling_factor = 10/distance_for_10_input
+   # print("Scaling factor")
+    #print(scaling_factor)
+    LW_scaled_dist = scaling_factor*LW_dist
+   # print("LW_scaled_dist")
+    #print(LW_scaled_dist)
+    RW_scaled_dist = scaling_factor*RW_dist
     duration_needed = np.abs(LW_dist)/speed
-    print("LW Distance: ")
-    print(LW_dist)
-    print("Duration: ")
-    print(duration_needed)
+    # print("LW Distance: ")
+    # print(LW_dist)
+    # print("Duration: ")
+    # print(duration_needed)
+    #print("Steps:")
+    #print(customRobot.right_encoder.steps)
 
     if (LW_dist == RW_dist and LW_dist>0): # FORWARD
-        print("starting forward move")
-        customRobot.drive_robot(velocity=[1,0], duration=duration_needed)
-        print("forward ended")
+        #print("starting forward move")
+        customRobot.drive_robot(velocity=[-1,0], duration=duration_needed)
+        print("forward")
     elif (LW_dist>RW_dist): #   RIGHT
         print("starting right move")
-        customRobot.drive_robot(velocity=[0,1], duration=duration_needed)
+        customRobot.drive_robot(velocity=[0,-1], duration=duration_needed)
         print("right ended")
     elif (LW_dist<RW_dist): #LEFT
-        customRobot.drive_robot(velocity=[0,-1], duration=duration_needed)
+        customRobot.drive_robot(velocity=[0,1], duration=duration_needed)
         print("left")
     elif (LW_dist == RW_dist and LW_dist<0): # BACKWARD
-        customRobot.drive_robot(velocity=[-1,0], duration=duration_needed)
+        customRobot.drive_robot(velocity=[1,0], duration=duration_needed)
         print("backward")
-
-    time.sleep(0.5)
+    
+    #print(customRobot.right_encoder.steps)
 
 def dis_from_angle(angle): # angle always in deg
   print("Distance from Angle: ")
@@ -129,11 +145,21 @@ def rot_func(angle, customRobot):
 
   drive(LW_dist, RW_dist,customRobot)
 
+def encoder_callback(channel):
+  print("INPUTED SIGNAL")
+
+# def detect_pwm(pin):
+#    try:
+#       while True:
+#          GPIO.wait_for_edge(pin, GPIO.RISING)
+
 def main():
-    customRobot = CustomRobot(left_motor_pins, right_motor_pins, distance_per_step=distance_per_step, right_encoder_pins=right_encoder_pins)
+    customRobot = CustomRobot(left_motor_pins, right_motor_pins, distance_per_step=distance_per_step, left_encoder_pins=left_encoder_pins, right_encoder_pins=right_encoder_pins)
     
     pwm1.start(100)
     pwm2.start(100)
+
+    #GPIO.add_event_detect(16, GPIO.BOTH, callback=encoder_callback)
 
     # x_green = 30 #cm
     # y_green = 20
@@ -159,14 +185,39 @@ def main():
     
     try:
     	while True:
-            print("forward")
-            drive(40,40,customRobot)
-            print("right")
-            drive(40,-40, customRobot)
-            print("left")
-            drive(-40,40,customRobot)
-            print("backwards")
-            drive(40,-40, customRobot)
+            """# This is calibration code
+            turning_dist = ((180*np.pi*11)/180)*0.9
+            print("Turning dist")
+            print(turning_dist)
+            RW_dist = -1*turning_dist
+            drive(-1*RW_dist, -1*turning_dist, customRobot)
+            """
+            #This is path projection code
+            angle = (np.arctan(50/60)*180)/np.pi
+            print("Angle")
+            print(angle) # 39.806
+            one_rotate = ((angle*np.pi*11)/180)*0.9
+            drive(one_rotate, -1*one_rotate, customRobot)
+            break
+            
+            two_translate = np.sqrt(50*50 + 60*60)
+            drive(two_translate, two_translate, customRobot)
+            
+            two_rotate = 90 + angle
+            drive(two_rotate*-1, two_rotate, customRobot)
+            
+            three_translate = 50
+            drive(three_translate, three_translate, customRobot)
+            
+            
+            
+            #drive(-25,-25,customRobot)
+            # print("right")
+            # drive(80,-80, customRobot)
+            # print("left")
+            # drive(-20,20,customRobot)
+            # print("backwards")
+            # drive(40,-40, customRobot)
             # print("forward")
             # #print("\nSteps: " + customRobot.left_encoder.steps)
             # customRobot.drive_robot(velocity=[1,0], duration=5)
