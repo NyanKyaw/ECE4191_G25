@@ -2,7 +2,7 @@
 
 import RPi.GPIO as GPIO
 import config
-from robot2 import CustomRobot
+from scripts.main.robot import CustomRobot
 import math
 import numpy as np
 

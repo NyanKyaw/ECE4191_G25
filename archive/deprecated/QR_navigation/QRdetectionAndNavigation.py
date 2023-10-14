@@ -1,7 +1,7 @@
 import cv2
 from pyzbar.pyzbar import decode
 # Import the motor control file
-from MotorControl import forward, backward, stop
+from archive.deprecated.motorcontrol.MotorControl import forward, backward, stop
 
 class Robot:
     def __init__(self, x, y):
