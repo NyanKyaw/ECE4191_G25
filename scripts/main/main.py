@@ -10,7 +10,7 @@ import multiprocessing
 def main():
   left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins = config.pinsetup()
 
-  detector, camera, rawCapture = config.camerasetup()
+  detector, camera = config.camerasetup()
 
   customRobot = CustomRobot(left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins)
 
@@ -18,7 +18,7 @@ def main():
   # PROCESS 1
   while True: # infinite loop
     if goal is None:
-      goal = parceldetector.readimage() # this function has its own while loop that will run infinitely until qr is detected
+      goal = parceldetector.readimage(detector=detector, camera=camera) # this function has its own while loop that will run infinitely until qr is detected
 
     print("test")
     break

@@ -57,13 +57,16 @@ def pinsetup(pwm_frequency = 100):
     return left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, pwm_left, pwm_right
 
 def camerasetup():
-    camera = PiCamera()
-    camera.resolution = (1920, 1080)  # Set resolution of the camera
-    camera.framerate = 32
-    rawCapture = PiRGBArray(camera, size=(1920, 1080))
+    # camera = PiCamera()
+    # camera.resolution = (1920, 1080)  # Set resolution of the camera
+    # camera.framerate = 32
+    # rawCapture = PiRGBArray(camera, size=(1920, 1080))
 
-    time.sleep(0.1)  # Allow the camera to warm up
+    # time.sleep(0.1)  # Allow the camera to warm up
+    cap = cv2.VideoCapture(1)
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) #set resolution of camera
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720) #resolution of camera
 
     detector = cv2.QRCodeDetector()
 
-    return detector, camera, rawCapture
+    return detector, cap
