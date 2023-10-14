@@ -5,6 +5,10 @@ from scripts.main.robot import CustomRobot
 import math
 import numpy as np
 from enum import Enum
+import cv2
+from picamera.array import PiRGBArray
+from picamera import PiCamera
+import time
 
 class MotorPins(Enum):
     LEFT_IN1 = 17,
@@ -51,3 +55,15 @@ def pinsetup(pwm_frequency = 100):
     pwm_right = GPIO.PWM(config.Right_PWM, pwm_frequency)
 
     return left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, pwm_left, pwm_right
+
+def camerasetup():
+    camera = PiCamera()
+    camera.resolution = (1920, 1080)  # Set resolution of the camera
+    camera.framerate = 32
+    rawCapture = PiRGBArray(camera, size=(1920, 1080))
+
+    time.sleep(0.1)  # Allow the camera to warm up
+
+    detector = cv2.QRCodeDetector()
+
+    return detector, camera, rawCapture
