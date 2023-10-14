@@ -7,43 +7,15 @@ import RPi.GPIO as GPIO
 
 from gpiozero import RotaryEncoder, Robot, OutputDevice, PWMOutputDevice
 
-
-# Motor
-    # Set velocity (PWM)
-        # Forward
-        # Rotational
-    # Receive feedback (odom)
-
-# Ultrasonic Sensor
-    # Send trigger
-    # Receive distance
-
-# Camera
-    # Send trigger
-    # Receive image
-    # Process?
-
-# Model Params
-    # Calibration
-
 class CustomRobot:
-    def __init__(self, **kwargs):
-        # Not running on remote machine, don't need ssh info -> Caveat might be CV, check with team
+    def __init__(self, left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins):
+        self.left_motor_pins = left_motor_pins 
+        self.right_motor_pins = right_motor_pins
 
-        # Do we need to define pins or hardcode? Defining prob better if we need to change :P
-        self.left_motor_pins = kwargs["left_motor_pins"] # Left IN Pins for L298N
-        self.right_motor_pins = kwargs["right_motor_pins"] # Right IN Pins for L298N
-
-        self.left_encoder_pins = kwargs["left_encoder_pints"] # Input to PI
-        self.right_encoder_pins = kwargs["right_encoder_pins"] # Input to PI
-
-        self.left_encoder = RotaryEncoder(self.left_encoder_pins, max_steps=1000000)
-        self.right_encoder = RotaryEncoder(self.right_encoder_pins, max_steps=1000000)
-
-        self.distance_per_revolution = kwargs["distance_per_revolution"]
-
+        self.left_encoder_pins = left_encoder_pins
+        self.right_encoder_pins = right_encoder_pins
+        
         self.x, self.y = [0,0]
-        self.heading = 0
 
     def drive_robot(self, left_wheel_dist, right_wheel_dist, duration=None):
         '''
