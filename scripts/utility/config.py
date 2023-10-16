@@ -22,12 +22,19 @@ class MotorPins(Enum):
     RIGHT_ENCA = 15,
     RIGHT_ENCB = 26
 
+class Goals(Enum): # tune
+    BIN_A = (0, 1),
+    BIN_B = (0.5, 1),
+    BIN_C = (1, 1)
+
 ### IMPORTANT PARAMETERS ###
 class RobotParams(Enum):
     WHEEL_DIAMETER = 56,
     WHEEL_DISTANCE_TO_CENTRE = 11.5,
     COUNT_PER_REV = 48, 
-    DISTANCE_PER_REVOLUTION = WHEEL_DIAMETER * np.pi # circumference
+    DISTANCE_PER_REVOLUTION = WHEEL_DIAMETER * np.pi, # circumference
+    LW_VELOCITY = 0.625 * DISTANCE_PER_REVOLUTION,
+    RW_VELOCITY = 0.625 * DISTANCE_PER_REVOLUTION
 
 def pinsetup(pwm_frequency = 100):
     ### Setup In/Out/PWM Pins ###
