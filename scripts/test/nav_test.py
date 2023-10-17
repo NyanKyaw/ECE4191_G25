@@ -56,9 +56,8 @@ def translate(distance):
 	ser.write(stop.encode())
 	ser.close()
 
-def read_ultrasonics(pins):
-	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4 = pins[0], pins[1], pins[2], pins[3], pins[4]
-
+def read_ultrasonics(pin0, pin1, pin2, pin3, pin4):
+	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4 = pin0, pin1, pin2, pin3, pin4
 	while True:
 		# Send trigger
 		GPIO.output(TRIG_1, False)
@@ -75,31 +74,31 @@ def read_ultrasonics(pins):
 		distance_1=pulse_duration_1*17150
 		print("US 1 Distance:", distance_1)
 			
-		while GPIO.input(ECHO_2)==0:
-			pulse_start_2=time.time()
-		while GPIO.input(ECHO_2)==1:
-			pulse_end_2=time.time()
-		pulse_duration_2=pulse_end_2-pulse_start_2
-		distance_2=pulse_duration_2*17150
-		print("US 2 Distance:", distance_2)
+		#while GPIO.input(ECHO_2)==0:
+		#	pulse_start_2=time.time()
+		#while GPIO.input(ECHO_2)==1:
+		#	pulse_end_2=time.time()
+		#pulse_duration_2=pulse_end_2-pulse_start_2
+		#distance_2=pulse_duration_2*17150
+		#print("US 2 Distance:", distance_2)
 
-		while GPIO.input(ECHO_3)==0:
-			print("stuck")
-			pulse_start_3=time.time()
-		while GPIO.input(ECHO_3)==1:
-			print("high")
-			pulse_end_3=time.time()
-		pulse_duration_3=pulse_end_3-pulse_start_3
-		distance_3=pulse_duration_3*17150
-		print("US 3 Distance:", distance_3)
+		#while GPIO.input(ECHO_3)==0:
+		#	print("stuck")
+		#	pulse_start_3=time.time()
+		#while GPIO.input(ECHO_3)==1:
+		#	print("high")
+		#	pulse_end_3=time.time()
+		#pulse_duration_3=pulse_end_3-pulse_start_3
+		#distance_3=pulse_duration_3*17150
+		#print("US 3 Distance:", distance_3)
 
-		while GPIO.input(ECHO_4)==0:
-			pulse_start=time.time()
-		while GPIO.input(ECHO_4)==1:
-			pulse_end=time.time()
-		pulse_duration=pulse_end-pulse_start
-		distance_4=pulse_duration*17150
-		print("US 4 Distance:", distance_4)
+		#while GPIO.input(ECHO_4)==0:
+		#	pulse_start=time.time()
+		#while GPIO.input(ECHO_4)==1:
+		#	pulse_end=time.time()
+		#pulse_duration=pulse_end-pulse_start
+		#distance_4=pulse_duration*17150
+		#print("US 4 Distance:", distance_4)
 
 def update_velocities(set_time):
 	start = time.time()
@@ -295,6 +294,8 @@ def main():
 
 if __name__ == "__main__":
 	left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, pwm_left, pwm_right, ultrasonic_pins = config.pinsetup()
+	print(ultrasonic_pins)
+
 
 	main_process = multiprocessing.Process(target=main) # so continuously drive out bot
 	sensor_process = multiprocessing.Process(target=read_ultrasonics, args=(ultrasonic_pins)) # continuously check sensors

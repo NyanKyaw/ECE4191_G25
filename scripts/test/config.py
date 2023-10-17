@@ -64,10 +64,10 @@ def pinsetup(pwm_frequency = 100):
     GPIO.setup(UltrasonicPins.ECHO_3.value, GPIO.IN)
     GPIO.setup(UltrasonicPins.ECHO_4.value, GPIO.IN)
 
-    LIMIT_SWITCH = 23
-    LEVER = 22
-    GPIO.setup(LIMIT_SWITCH, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
-    GPIO.setup(LEVER, GPIO.OUT)
+    #LIMIT_SWITCH = 23
+    #LEVER = 22
+    #GPIO.setup(LIMIT_SWITCH, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+    #GPIO.setup(LEVER, GPIO.OUT)
 
     ### Set MOTOR Pins ###
     left_motor_pins = (MotorPins.LEFT_IN1.value, MotorPins.LEFT_IN2.value, MotorPins.LEFT_PWM.value)
