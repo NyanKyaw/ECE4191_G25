@@ -6,45 +6,40 @@ def readimage(camera, detector):
         success, img = camera.read() #store label in 'img' variable
         value, points, qrcode = detector.detectAndDecode(img)
         value = str(value)
-        print(value)
-
-        #cv2.putText(img, value, (30,120), cv2.FONT_HERSHEY_SIMPLEX,2,(255,0,0))
         cv2.imshow('img', img)
-
         if value != "": #if QR code is detected and it's not empty, then extract points
             camera.release()
-            print("Length: ")
-            print(len(value))
-            if value == "Location A" or value == "Location A ":
-                goal = config.Goals.BIN_A.value
+            if value == "Location A" or value == "Location A\n":
+                goal = "A"
                 print(goal)
-                print("Detected!")
-            elif value == "Location B" or value == "Location B?":
-                goal = config.Goals.BIN_B.value
-                print(value)
-            elif value == "Location C" or value == "Location C?":
-                goal = config.Goals.BIN_C.value
-                print(value)
+            elif value == "Location B" or value == "Location B\n":
+                goal = "B"
+                print(goal)
+            elif value == "Location C" or value == "Location C\n":
+                goal = "C"
+                print(goal)
             else: # if not one of the values we expect, keep reading 
                 continue
              
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-    print("Here")
+            
     camera.release()
-    cv2.destroyAllWindows
+    cv2.destroyAllWindows()
     return goal
+    
+def run_camera():
+	detector, camera = config.camerasetup()
 
-    # for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-    #     img = frame.array
+	goal = None
 
-    #     value = detector.detectAndDecode(img)
+	while goal == None: # infinite loop
+		goal = readimage(detector=detector, camera=camera) # this function has its own while loop that will run infinitely until qr is detected
+			
+	return goal
 
-    #     if value != "":  # If QR code is detected and it's not empty, then extract points
-    #         return value
-
-    #     rawCapture.truncate(0)
-
+if __name__== "__main__":
+	run_camera()
 
 

@@ -11,7 +11,7 @@ def moveServo(start, end, delta):
 		time.sleep(incTime)
 		
 
-def test_servo():
+def run_servo():
     servo = Servo(22)
     """
     servo = Servo(22, min_pulse_width = 0.0015, max_pulse_width = 0.0025, frame_width = 0.02)
