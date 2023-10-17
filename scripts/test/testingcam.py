@@ -9,6 +9,5 @@ goal = None
 
 while True: # infinite loop
 	if goal is None:
-    		goal = parceldetector.readimage(detector=detector, camera=camera) # this function has its own while loop that will run infinitely until qr is detected
-    		print(goal)
-    		print(2)
+		goal = parceldetector.readimage(detector=detector, camera=camera) # this function has its own while loop that will run infinitely until qr is detected
+
