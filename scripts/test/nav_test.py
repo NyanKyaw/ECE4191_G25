@@ -5,6 +5,8 @@ from servoTest import run_servo
 from parceldetector import run_camera
 import serial
 import time
+import multiprocessing
+import config
 
 LIMIT_SWITCH = 23
 LEVER = 22
@@ -47,11 +49,63 @@ def translate(distance):
 	elif (distance<0):
 		val_str = "+0.5-0.5\n"
 	ser.write(val_str.encode())
-	time.sleep(set_time) # For Forward/Backward
+
+	update_velocities(set_time=set_time)
 	
 	stop = f"{0}\n"
 	ser.write(stop.encode())
 	ser.close()
+
+def read_ultrasonics(pins):
+	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4 = pins[0], pins[1], pins[2], pins[3], pins[4]
+
+	while True:
+		# Send trigger
+		GPIO.output(TRIG_1, False)
+		time.sleep(0.1) #0.2
+		GPIO.output(TRIG_1, True)
+		time.sleep(0.2) #1
+		GPIO.output(TRIG_1, False)
+
+		while GPIO.input(ECHO_1)==0:
+			pulse_start_1=time.time()
+		while GPIO.input(ECHO_1)==1:
+			pulse_end_1 = time.time()
+		pulse_duration_1=pulse_end_1-pulse_start_1
+		distance_1=pulse_duration_1*17150
+		print("US 1 Distance:", distance_1)
+			
+		while GPIO.input(ECHO_2)==0:
+			pulse_start_2=time.time()
+		while GPIO.input(ECHO_2)==1:
+			pulse_end_2=time.time()
+		pulse_duration_2=pulse_end_2-pulse_start_2
+		distance_2=pulse_duration_2*17150
+		print("US 2 Distance:", distance_2)
+
+		while GPIO.input(ECHO_3)==0:
+			print("stuck")
+			pulse_start_3=time.time()
+		while GPIO.input(ECHO_3)==1:
+			print("high")
+			pulse_end_3=time.time()
+		pulse_duration_3=pulse_end_3-pulse_start_3
+		distance_3=pulse_duration_3*17150
+		print("US 3 Distance:", distance_3)
+
+		while GPIO.input(ECHO_4)==0:
+			pulse_start=time.time()
+		while GPIO.input(ECHO_4)==1:
+			pulse_end=time.time()
+		pulse_duration=pulse_end-pulse_start
+		distance_4=pulse_duration*17150
+		print("US 4 Distance:", distance_4)
+
+def update_velocities(set_time):
+	start = time.time()
+	p_val = 0.02
+	while time.time() - start < set_time:
+		continue
 	
 def rotate(angle):
 	"""
@@ -74,7 +128,7 @@ def rotate(angle):
 		
 	ser.write(val_str.encode())
 	time.sleep(set_time) # For Forward/Backward
-	
+
 	stop = f"{0}\n"
 	ser.write(stop.encode())
 	ser.close()
@@ -125,7 +179,7 @@ def bin_A():
 	Directions to Bin A
 	"""
 	# Waypoint 1
-	print("1")
+	translate(81.98)
 	rotate(131.186)
 	print(2)
 	
@@ -163,6 +217,7 @@ def bin_B():
 	"""
 	# Waypoint 1
 	translate(81.98)
+	translate(81.98)
 	rotate(90)
 	print(1)
 	
@@ -197,6 +252,7 @@ def bin_C():
 	"""
 	# Waypoint 1
 	translate(81.98)
+	translate(81.98)
 	rotate(90)
 	print(1)
 	
@@ -215,30 +271,39 @@ def bin_C():
 	print(4)
 
 def main():
-	pinsetup()
-	while True:
-		goal_bin = None
-		print("Waiting for QR Code")
-		while goal_bin == None:
-			goal_bin = run_camera()
+	bin_A()
+	# while True:
+	# 	goal_bin = None
+	# 	print("Waiting for QR Code")
+	# 	while goal_bin == None:
+	# 		goal_bin = run_camera()
 			
-		if (goal_bin == "A"):
-			bin_A()
-		elif (goal_bin == "B"):
-			bin_B()
-		elif (goal_bin == "C"):
-			bin_C()
-		else:
-			print("Unknown Bin")
+	# 	if (goal_bin == "A"):
+	# 		bin_A()
+	# 	elif (goal_bin == "B"):
+	# 		bin_B()
+	# 	elif (goal_bin == "C"):
+	# 		bin_C()
+	# 	else:
+	# 		print("Unknown Bin")
 			
-		print(6)
-		run_servo()
-		print(7)
+	# 	print(6)
+	# 	run_servo()
+	# 	print(7)
 		
 	GPIO.cleanup()
 
 if __name__ == "__main__":
-	main()
-	
+	left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, pwm_left, pwm_right, ultrasonic_pins = config.pinsetup()
+
+	main_process = multiprocessing.Process(target=main) # so continuously drive out bot
+	sensor_process = multiprocessing.Process(target=read_ultrasonics, args=(ultrasonic_pins)) # continuously check sensors
+
+	main_process.start()
+	sensor_process.start()
+
+	main_process.join()
+	sensor_process.join()
+		
 
 

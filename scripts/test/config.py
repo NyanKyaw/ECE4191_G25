@@ -9,6 +9,14 @@ import cv2
 # from picamera import PiCamera
 import time
 
+class UltrasonicPins(Enum):
+    TRIG_1 = 27
+    ECHO_1 = 2
+    ECHO_2 = 3
+    ECHO_3 = 4
+    ECHO_4 = 17
+    # missing sensor 5
+
 class MotorPins(Enum):
     LEFT_IN1 = 17
     LEFT_IN2 = 27
@@ -22,9 +30,9 @@ class MotorPins(Enum):
     RIGHT_ENCB = 26
 
 class Goals(Enum): # tune
-    BIN_A = (0, 1)
-    BIN_B = (0.5, 1)
-    BIN_C = (1, 1)
+    BIN_A = "A"
+    BIN_B = "B"
+    BIN_C = "C"
 
 ### IMPORTANT PARAMETERS ###
 class RobotParams(Enum):
@@ -50,6 +58,17 @@ def pinsetup(pwm_frequency = 100):
     GPIO.setup(MotorPins.RIGHT_ENCA.value, GPIO.IN)
     GPIO.setup(MotorPins.RIGHT_ENCB.value, GPIO.IN)
 
+    GPIO.setup(UltrasonicPins.TRIG_1.value, GPIO.OUT)
+    GPIO.setup(UltrasonicPins.ECHO_1.value, GPIO.IN)
+    GPIO.setup(UltrasonicPins.ECHO_2.value, GPIO.IN)
+    GPIO.setup(UltrasonicPins.ECHO_3.value, GPIO.IN)
+    GPIO.setup(UltrasonicPins.ECHO_4.value, GPIO.IN)
+
+    LIMIT_SWITCH = 23
+    LEVER = 22
+    GPIO.setup(LIMIT_SWITCH, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+    GPIO.setup(LEVER, GPIO.OUT)
+
     ### Set MOTOR Pins ###
     left_motor_pins = (MotorPins.LEFT_IN1.value, MotorPins.LEFT_IN2.value, MotorPins.LEFT_PWM.value)
     right_motor_pins = (MotorPins.RIGHT_IN3.value, MotorPins.RIGHT_IN4.value, MotorPins.RIGHT_PWM.value)
@@ -57,12 +76,14 @@ def pinsetup(pwm_frequency = 100):
     left_encoder_pins = (MotorPins.LEFT_ENCA, MotorPins.LEFT_ENCB)
     right_encoder_pins = (MotorPins.RIGHT_ENCA.value, MotorPins.RIGHT_ENCB.value)
 
-    print(MotorPins.LEFT_IN1.value)
-
     pwm_left = GPIO.PWM(MotorPins.LEFT_PWM.value, pwm_frequency) 
     pwm_right = GPIO.PWM(MotorPins.RIGHT_PWM.value, pwm_frequency)
 
-    return left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, pwm_left, pwm_right
+    ultrasonic_pins = (UltrasonicPins.TRIG_1.value, UltrasonicPins.ECHO_1.value,
+                       UltrasonicPins.ECHO_2.value, UltrasonicPins.ECHO_3.value,
+                       UltrasonicPins.ECHO_4.value)
+
+    return left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, pwm_left, pwm_right, ultrasonic_pins
 
 def camerasetup():
     # camera = PiCamera()
