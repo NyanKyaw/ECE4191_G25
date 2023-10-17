@@ -4,8 +4,8 @@ import numpy as np
 import sys, os, time, math
 import RPi.GPIO as GPIO
 #from ultrasonic_sensor import ultrasonic_sensor
-import scripts.utility.utility as utils
-import scripts.utility.servoTest as servoTest
+import utility as utils
+import servoTest as servoTest
 
 from gpiozero import RotaryEncoder, Robot, OutputDevice, PWMOutputDevice
 
@@ -116,8 +116,7 @@ class CustomRobot:
         pass
 
     def deploy_packages(self):
-        # GRANT LEVER CODE
-        pass
+        servoTest.test_servo()
     
     def reset_x_y(self):
         self.x, self.y = 0,0

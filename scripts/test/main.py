@@ -1,18 +1,18 @@
 import RPi.GPIO as GPIO
-import scripts.utility.config as config
-import scripts.utility.utility as utils
-import scripts.utility.parceldetector as parceldetector
-from scripts.main.robot import CustomRobot
+import config as config
+import utility as utils
+import parceldetector as parceldetector
+from robot import CustomRobot
 import math
 import numpy as np
 import multiprocessing
 
 def main():
-  left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins = config.pinsetup()
+  left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, pwm_left, pwm_right = config.pinsetup()
 
   detector, camera = config.camerasetup()
 
-  customRobot = CustomRobot(left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, wheel_velocities = (config.RobotParams.LW_VELOCITY.value, config.RobotParams.RW_VELOCITY.value))
+  customRobot = CustomRobot(left_motor_pins, right_motor_pins, left_encoder_pins, right_encoder_pins, wheel_velocities = (config.RobotParams.LW_VELOCITY.value * config.RobotParams.DISTANCE_PER_REVOLUTION.value, config.RobotParams.RW_VELOCITY.value * config.RobotParams.DISTANCE_PER_REVOLUTION.value))
 
   goal = None
 
