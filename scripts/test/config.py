@@ -71,7 +71,7 @@ def camerasetup():
     # rawCapture = PiRGBArray(camera, size=(1920, 1080))
 
     # time.sleep(0.1)  # Allow the camera to warm up
-    cap = cv2.VideoCapture(1)
+    cap = cv2.VideoCapture(0)
     cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280) #set resolution of camera
     cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720) #resolution of camera
 

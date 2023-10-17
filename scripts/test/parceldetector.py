@@ -13,19 +13,25 @@ def readimage(camera, detector):
 
         if value != "": #if QR code is detected and it's not empty, then extract points
             camera.release()
-            if value == "A" or value == "A?":
+            print("Length: ")
+            print(len(value))
+            if value == "Location A" or value == "Location A ":
                 goal = config.Goals.BIN_A.value
-            elif value == "B" or value == "B?":
+                print(goal)
+                print("Detected!")
+            elif value == "Location B" or value == "Location B?":
                 goal = config.Goals.BIN_B.value
-            elif value == "C" or value == "C?":
+                print(value)
+            elif value == "Location C" or value == "Location C?":
                 goal = config.Goals.BIN_C.value
+                print(value)
             else: # if not one of the values we expect, keep reading 
                 continue
-            break
+             
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
             break
-
+    print("Here")
     camera.release()
     cv2.destroyAllWindows
     return goal
