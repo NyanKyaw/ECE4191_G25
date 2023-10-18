@@ -8,14 +8,16 @@ import time
 import multiprocessing
 import config
 
-LIMIT_SWITCH = 23
+LIMIT_SWITCH_1 = 23
+LIMIT_SWITCH_2 = 25
 LEVER = 22
-tuning_param_trans = 1.3
-tuning_param_rotate = 1.1
+tuning_param_trans = 1
+tuning_param_rotate = 0.95
 
 def pinsetup():
 	GPIO.setmode(GPIO.BCM)
-	GPIO.setup(LIMIT_SWITCH, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+	GPIO.setup(LIMIT_SWITCH_1, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+	GPIO.setup(LIMIT_SWITCH_2, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
 	GPIO.setup(LEVER, GPIO.OUT)
 
 def test_limit_switch():
@@ -143,35 +145,40 @@ def reverse_to_bin():
 	Returns:
 		None
 	"""
-	ls_state = GPIO.input(LIMIT_SWITCH)
+	ls_state_1 = GPIO.input(LIMIT_SWITCH_1)
+	ls_state_2 = GPIO.input(LIMIT_SWITCH_2)
 	ser = serial.Serial('/dev/ttyUSB0', 9600)
 	time.sleep(2)
-	while (ls_state == GPIO.LOW):
-		val_str = "+0.5-0.5\n"
-		ser.write(val_str.encode())	
-		ls_state = GPIO.input(LIMIT_SWITCH)
+	val_str = "+0.5-0.5\n"
+	ser.write(val_str.encode())	
+	while (ls_state_1 == GPIO.LOW or ls_state_2 == GPIO.LOW):
+		ls_state_1 = GPIO.input(LIMIT_SWITCH_1)
+		ls_state_2 = GPIO.input(LIMIT_SWITCH_2)
 	
 	#time.sleep(0)
 	stop = f"{0}\n"
 	ser.write(stop.encode())
 	ser.close()
 
-def reverse_to_loading_zone():
-	""" 
-	Robot reverses to the loading zone, uses P wall-distance controller
-	"""
-	ls_state = GPIO.input(LIMIT_SWITCH)
-	ser = serial.Serial('/dev/ttyUSB0', 9600)
-	time.sleep(2)
-	while (ls_state == GPIO.LOW):
-		val_str = "+0.5-0.5\n" #add P Wall-distance controller
-		ser.write(val_str.encode())	
-		ls_state = GPIO.input(LIMIT_SWITCH)
+
+
+# def reverse_to_loading_zone():
+# 	""" 
+# 	Robot reverses to the loading zone, uses P wall-distance controller
+# 	"""
+# 	ls_state = GPIO.input(LIMIT_SWITCH)
+# 	ser = serial.Serial('/dev/ttyUSB0', 9600)
+# 	time.sleep(2)
+# 	val_str = "+0.5-0.5\n" #add P Wall-distance controller
+# 	ser.write(val_str.encode())	
+# 	while (ls_state == GPIO.LOW):	
+# 		ls_state = GPIO.input(LIMIT_SWITCH)
+# 		print(ls_state)
 	
-	#time.sleep(0) - check on wed to add
-	stop = f"{0}\n"
-	ser.write(stop.encode())
-	ser.close()
+# 	#time.sleep(0) - check on wed to add
+# 	stop = f"{0}\n"
+# 	ser.write(stop.encode())
+# 	ser.close()
 	
 def bin_A():
 	"""
@@ -190,6 +197,7 @@ def bin_A():
 	
 	#To Bin A
 	reverse_to_bin()
+	run_servo()
 	print(5)
 	
 def back_from_bin_A():
@@ -198,7 +206,7 @@ def back_from_bin_A():
 	"""
 	# Waypoint 2
 	translate(7.9825)
-	rotate(41.186)
+	rotate(-41.186)
 	
 	#Waypoint 1
 	translate(9.37)
@@ -216,7 +224,6 @@ def bin_B():
 	"""
 	# Waypoint 1
 	translate(81.98)
-	translate(81.98)
 	rotate(90)
 	print(1)
 	
@@ -227,6 +234,7 @@ def bin_B():
 	
 	#To Bin A
 	reverse_to_bin()
+	run_servo()
 	print(3)
 	
 def back_from_bin_B():
@@ -251,7 +259,6 @@ def bin_C():
 	"""
 	# Waypoint 1
 	translate(81.98)
-	translate(81.98)
 	rotate(90)
 	print(1)
 	
@@ -270,25 +277,33 @@ def bin_C():
 	print(4)
 
 def main():
-	bin_A()
-	# while True:
-	# 	goal_bin = None
-	# 	print("Waiting for QR Code")
-	# 	while goal_bin == None:
-	# 		goal_bin = run_camera()
-			
-	# 	if (goal_bin == "A"):
-	# 		bin_A()
-	# 	elif (goal_bin == "B"):
-	# 		bin_B()
-	# 	elif (goal_bin == "C"):
-	# 		bin_C()
-	# 	else:
-	# 		print("Unknown Bin")
-			
-	# 	print(6)
-	# 	run_servo()
-	# 	print(7)
+	ser = serial.Serial('/dev/ttyUSB0', 9600)
+	time.sleep(2)
+
+	stop = f"{0}\n"
+	ser.write(stop.encode())
+	ser.close()
+	#Waypoint 1
+	# Waypoint 1
+	# translate(81.98)
+	# rotate(90)
+	# print(1)
+	
+	# #Waypoint 2
+	# translate(73.8)
+	# rotate(117.35) # removed 1 cm
+	# print(2)
+	
+	# #Waypoint 3
+	# translate(-13.53)
+	# rotate(-27.35)
+	# # print(3)
+	
+	# #To Bin A
+	# reverse_to_bin()
+	# run_servo()
+
+
 		
 	GPIO.cleanup()
 
