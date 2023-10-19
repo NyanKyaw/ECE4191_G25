@@ -242,9 +242,19 @@ def translate(distance):
 	#obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
 	#obstacle_detection_process.start()
 	#obstacle_detection_process.join()
-
-	while current_time-start_time < set_time and not stop_drive_event.is_set(): 
+	delay_time = 0
+	while current_time-start_time < set_time + delay_time: 
 		current_time = time.time()
+		stop_time = detect_obstacle()
+		if stop_time is not None:
+			delay_time = time.time() - stop_time
+		# #if stop_drive_event.is_set():
+		# 	stop_time = time.time()
+		# 	stop = f"{0}\n"
+		# 	ser.write(stop.encode())
+		# 	while stop_drive_event.is_set():
+		# 		pass
+		# 	delay_time = time.time() - stop_time
 		#print(current_time-start_time)
 		#detect_obstacle()
 	
@@ -255,15 +265,20 @@ def translate(distance):
 	# ser.close()
 
 def detect_obstacle():
-	while True:
-		distance = readUltrasonic(ECHO_3)
-		if distance <= 10:
-			stop_drive_event.set()
+	distance = readUltrasonic(ECHO_3)
+	if distance <= 10:
+		print("OBSTACLE DETECTED")
+		#stop_drive_event.set()
+		stop_time = time.time()
+		stop = f"{0}\n"
+		ser.write(stop.encode())
 
-			while distance <= 10:
-				distance = readUltrasonic(ECHO_3)
-
-			stop_drive_event.clear()	
+		while distance <= 10:
+			print(f"US 3 distance: {distance}")
+			distance = readUltrasonic(ECHO_3)
+		return stop_time
+		#stop_drive_event.clear()	
+	return None
 
 def main():
 	dist_from_wall_B = 16
@@ -347,9 +362,6 @@ def main():
 			else:
 				#Compute trajectory of the waypoint
 				translate(distance)
-				# translate_process = multiprocessing.Process(target=translate, args = (distance,))
-				# translate_process.start()
-				# translate_process.join()
 				
 				#drive to waypoint
 				
@@ -362,7 +374,7 @@ def main():
 					#side dependant on an element of the vector
 					#use the checkDistance function
 					xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
-					location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWapoint[3])*(xr) #computes differently depending on the side that the wall is on
+					location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWaypoint[3])*(xr) #computes differently depending on the side that the wall is on
 					#y coordinate will always be the same when in contact with the South wall
 					location[1] = 11.265
 					#updating orientation
@@ -401,11 +413,22 @@ if __name__ == "__main__":
 	#Defining an empty waypoints vector
 	waypoints = []
 	stop_drive_event = multiprocessing.Event()
+	stop_drive_event.clear()
+
 	stop()
 	#reverseToLimitSwitch()
 	
 	#checkWallDistance(0)
+
 	#main()
+	# obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
+	# main_process = multiprocessing.Process(target=main())
+
+	# obstacle_detection_process.start()
+	# main_process.start()
+
+	# obstacle_detection_process.join()
+	# main_process.join()
 
 
 
