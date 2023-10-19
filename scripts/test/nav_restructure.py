@@ -60,6 +60,8 @@ GPIO.setup(ECHO_5, GPIO.IN)
 ser = serial.Serial('/dev/ttyUSB0', 9600)
 time.sleep(2)
 
+obstacle_threshold = 10
+
 	#return TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2
 
 def computeTrajectory(location,orientation,waypoint):
@@ -195,6 +197,8 @@ def checkWallDistance(sideToCheck):
 			dist2 = readUltrasonic(ECHO_2)
 			print(f"Dist2: {dist2}")
 		#1 - check the right ultrasonics
+			current_time = time.time()
+			avgDistance = (dist1 + dist2)/2
 		else:
 			dist1 = readUltrasonic(ECHO_3)
 			print(f"Dist1: {dist1}")
@@ -233,8 +237,10 @@ def rotate(angle):
 	
 	if (angle>0):
 		val_str = "+0.5+0.5\n" #Rotate Right
+		print(f"Rotate: {val_str}")
 	elif (angle<0):
 		val_str = "-0.5-0.5\n" #Rotate Left
+		print(f"Rotate: {val_str}")
 		
 	ser.write(val_str.encode())
 	time.sleep(set_time) # For Forward/Backward
@@ -276,18 +282,19 @@ def translate(distance):
 	delay_time = 0
 	while current_time-start_time < set_time + delay_time: 
 		current_time = time.time()
-		"""
+		
 		stop_time = detect_obstacle()
 		if stop_time is not None:
 			delay_time = time.time() - stop_time
-		"""
-		# #if stop_drive_event.is_set():
-		# 	stop_time = time.time()
-		# 	stop = f"{0}\n"
-		# 	ser.write(stop.encode())
-		# 	while stop_drive_event.is_set():
-		# 		pass
-		# 	delay_time = time.time() - stop_time
+			print(f"Delay Time {delay_time}")
+			ser.write(val_str.encode())
+		#if stop_drive_event.is_set():
+			# stop_time = time.time()
+			# stop = f"{0}\n"
+			# ser.write(stop.encode())
+			# while stop_drive_event.is_set():
+			# 	pass
+			# delay_time = time.time() - stop_time
 		#print(current_time-start_time)
 		#detect_obstacle()
 	
@@ -298,8 +305,8 @@ def translate(distance):
 	# ser.close()
 
 def detect_obstacle():
-	distance = readUltrasonic3(ECHO_3)
-	if distance <= 10:
+	distance = readUltrasonic3()
+	if distance <= obstacle_threshold:
 		print("OBSTACLE DETECTED")
 		#stop_drive_event.set()
 		stop_time = time.time()
@@ -308,7 +315,7 @@ def detect_obstacle():
 
 		while distance <= 10:
 			print(f"US 3 distance: {distance}")
-			distance = readUltrasonic3(ECHO_3)
+			distance = readUltrasonic3()
 		return stop_time
 		#stop_drive_event.clear()	
 	return None
@@ -318,11 +325,11 @@ def main():
 
 	bin_A = [[23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,0,0,1, 1, 1], [dist_from_wall,100,0,0,0, 0, 0], [23.2,94,0,0,0, 0, 0], [23.2, 12.02, 1, 0, 1, 0, 1]] 
 	bin_B = [[23.2,94,0,0,0,0,0],[60,94,0,0,0,0,0],[60,120,0,0,1,1,1], [60,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0, 1]]
-	bin_C = [[23.2,94,0,0,0,0,0],[93,94,0,0,0,0,0],[120-dist_from_wall_B,100,0,0,0,0,1], [120-dist_from_wall_B,120,0,0,1,1,1], [120-dist_from_wall_B,100,0,0,0,0,0], [93,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0,1]]
+	bin_C = [[33.2,94,0,0,0,0,0],[93,94,0,0,0,0,0],[120-dist_from_wall_B,100,0,0,0,0,1], [120-dist_from_wall_B,120,0,0,1,1,1], [120-dist_from_wall_B,100,0,0,0,0,0], [93,94,0,0,0,0,0], [33.2,94,0,0,0,0,0], [33.2, 12.02, 1, 0, 1, 0,1]]
 	waypoints = []
     #waypoints = bin_B
 	#TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
-	location = [23.2,12.0175] #x = 23.2cm, y = 12.0175cm
+	location = [33.2,12.0175] #x = 23.2cm, y = 12.0175cm
 	orientation = 0 #degrees clockwise from north, we might need to use this in radians for numpy
 	
 
@@ -344,6 +351,7 @@ def main():
 
 			# #Read first waypoint
 			nextWaypoint = waypoints[0] #should be a row vector of length 5
+			print(f"Next Waypoint: {nextWaypoint}")
 
 
 			#Check for the reverse and deploy flag
@@ -389,7 +397,11 @@ def main():
 					location[1] = 11.265
 					orientation = 0
 					print(f"x: {location[0]} y: {location[1]} orientation: {orientation}")
-				
+					translate(10)
+					location[1] += 10
+					print(f"x: {location[0]} y: {location[1]} orientation: {orientation}")
+					
+
 			
 
 			else:
@@ -427,7 +439,7 @@ if __name__ == "__main__":
 	#Defining pins and constants
 	tuning_param_trans = 1
 	#tuning_param_rotate = 1.01
-	tuning_param_rotate = 0.98
+	tuning_param_rotate = 0.96
 	dist_from_wall = 18 # Can delete when camera function is brought back
 
 	#Setting up servo - this can go elsewhere if necessary
@@ -455,7 +467,7 @@ if __name__ == "__main__":
 
 	main()
 	# obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
-	# main_process = multiprocessing.Process(target=main())
+	# mains_prsocess = multiprocessing.Process(target=main())
 
 	# obstacle_detection_process.start()
 	# main_process.start()
