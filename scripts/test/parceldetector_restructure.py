@@ -10,11 +10,11 @@ def readimage(camera, detector, goal):
         success, img = camera.read() #store label in 'img' variable
         value, points, qrcode = detector.detectAndDecode(img)
         value = str(value)
-        cv2.imshow('img', img)
+        #cv2.imshow('img', img)
         if value != "": #if QR code is detected and it's not empty, then extract points
             camera.release()
             if value == "Location A" or value == "Location A\n":
-                goal = [[23.2,94,0,0,0,0],[dist_from_wall,100,0,0,0,0],[dist_from_wall,120,1,1,1], [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
+                goal = [[23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,0,0,1, 1, 1], [dist_from_wall,100,0,0,0, 0, 0], [23.2,94,0,0,0, 0, 0], [23.2, 12.02, 1, 0, 1, 0, 1]] 
                 #Goal formatting here is:
                 #[X,Y,CalibrateFlag,Side,ReverseFlag. DeployFlag]
                 #X and Y are waypoint coordinates
@@ -27,10 +27,10 @@ def readimage(camera, detector, goal):
                 #waypoint will be ignored, so duplicate the previous waypoint
                 print(goal)
             elif value == "Location B" or value == "Location B\n":
-                goal = [[23.2,94,0,0,0,0],[60,94,0,0,0,0],[60,120,0,1,1], [60,94,0,0,0], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
+                goal = [[23.2,94,0,0,0,0,0],[60,94,0,0,0,0,0],[60,120,0,0,1,1,1], [60,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0, 1]]
                 print(goal)
             elif value == "Location C" or value == "Location C\n":
-                goal = [[23.2,94,0,0,0,0],[93,94,0,0,0,0],[120-dist_from_wall,100,1,1,1], [120-dist_from_wall,120,1,1,1,1], [120-dist_from_wall,100,1,1,1], [23.2,94,0,0,0,0],[93,94,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
+                goal = [[23.2,94,0,0,0,0,0],[93,94,0,0,0,0,0],[120-dist_from_wall,100,0,0,0,0,1], [120-dist_from_wall,120,0,0,1,1,1], [120-dist_from_wall,100,0,0,0,0,0], [93,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0,1]]
                 print(goal)
             else: # if not one of the values we expect, keep reading 
                 continue
@@ -40,7 +40,7 @@ def readimage(camera, detector, goal):
             break
             
     camera.release()
-    cv2.destroyAllWindows()
+    #cv2.destroyAllWindows()
     return goal
     
 def run_camera():

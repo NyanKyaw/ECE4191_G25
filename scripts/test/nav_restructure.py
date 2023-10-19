@@ -57,21 +57,19 @@ ECHO_5 = 24
 GPIO.setmode(GPIO.BCM)
 GPIO.setup(ECHO_5, GPIO.IN)
 
+ser = serial.Serial('/dev/ttyUSB0', 9600)
+time.sleep(2)
+
 	#return TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2
 
 def computeTrajectory(location,orientation,waypoint):
 	distanceTranslation = np.sqrt((waypoint[0]-location[0])**2 + (waypoint[1]-location[1])**2)*np.power(-1,waypoint[6])			
 	#Euclidian distance to the waypoint.
 	#Could probably do this ^ with np.linalg.norm if we wanted
-	print("location")
-	print(location)
-	print("\n")
-	print(orientation)
-	print("x: ")
-	print(waypoint[0])
-	print("y: ")
-	print(waypoint[1])
-	print(f"pre 180 degree angle : {np.degrees(np.arctan2((waypoint[0]-location[0]),(waypoint[1]-location[1])))}")
+	print("In Compute Trajectory")
+	print(f"Location {location}")
+	print(f"Orientation {location}")
+	print(f"Next Waypoint: {waypoint[0]}, {waypoint[1]}")
 	angleRotation = np.degrees(np.arctan2((waypoint[0]-location[0]),(waypoint[1]-location[1]))) +180*waypoint[6]
 	
 	#NOTE: We may need some sort of angle constant eg +90 to convert this to our coordinate system. Not sure
@@ -123,7 +121,7 @@ def reverseToLimitSwitch():
 	Returns:
 		None
 	"""
-	print("Running until limit switch is triggered!")
+	print("Running until limit switch is triggered")
 	LIMIT_SWITCH_1 = 23
 	LIMIT_SWITCH_2 = 25
 
@@ -135,8 +133,8 @@ def reverseToLimitSwitch():
 	# ls_state_1 = GPIO.input(LIMIT_SWITCH_1)
 	# ls_state_2 = GPIO.input(LIMIT_SWITCH_2)
 	
-	ser = serial.Serial('/dev/ttyUSB0', 9600)
-	time.sleep(2)
+	# ser = serial.Serial('/dev/ttyUSB0', 9600)
+	# time.sleep(2)
 	val_str = "+0.5-0.5\n"
 	ser.write(val_str.encode())	
 	ls_state_1 = GPIO.input(LIMIT_SWITCH_1)
@@ -148,34 +146,43 @@ def reverseToLimitSwitch():
 	#time.sleep(0)
 	stop = f"{0}\n"
 	ser.write(stop.encode())
-	ser.close()
+	# ser.close()
 	
 def stop():
-	ser = serial.Serial('/dev/ttyUSB0', 9600)
-	time.sleep(2)
+	
 	stop = f"{0}\n"
 	ser.write(stop.encode())
-	ser.close()
+	
 
 def checkWallDistance(sideToCheck):
 	#0 - check the left ultrasonics
-	if(sideToCheck==0):
-		dist1 = readUltrasonic(ECHO_1)
-		print(dist1)
-		dist2 = readUltrasonic(ECHO_2)
-		print(dist2)
-	#1 - check the right ultrasonics
-	else:
-		dist1 = readUltrasonic(ECHO_3)
-		print(dist1)
-		dist2 = readUltrasonic(ECHO_4)
-		print(dist2)
+	start_time = time.time()
+	while True:
+		if(sideToCheck==0):
+			dist1 = readUltrasonic(ECHO_1)
+			print(f"Dist1: {dist1}")
+			dist2 = readUltrasonic(ECHO_2)
+			print(f"Dist2: {dist2}")
+		#1 - check the right ultrasonics
+		else:
+			dist1 = readUltrasonic(ECHO_3)
+			print(f"Dist1: {dist1}")
+			dist2 = readUltrasonic(ECHO_4)
+			print(f"Dist2: {dist2}")
 
-	avgDistance = (dist1 + dist2)/2
-	print(f" Average wall dist: {avgDistance}")
+			current_time = time.time()
+			avgDistance = (dist1 + dist2)/2
+			
+		
+		if (abs(dist1-dist2)<0.5):
 
-	return avgDistance
-
+			print(f" Average wall dist: {avgDistance}")
+			return avgDistance
+		
+		if(current_time-start_time>10):
+			print("10 Second Limit Met")
+			print(f" Average wall dist: {avgDistance}")
+			return avgDistance # maybe hard code to 1.5
 def rotate(angle):
 	"""
 	This function is used for all rotational movements.
@@ -189,8 +196,8 @@ def rotate(angle):
 	if angle == 0:
 		return
 
-	ser = serial.Serial('/dev/ttyUSB0', 9600)
-	time.sleep(2)
+	# ser = serial.Serial('/dev/ttyUSB0', 9600)
+	# time.sleep(2)
 	set_time = abs(tuning_param_rotate*(5.14/360)*abs(angle))
 	
 	if (angle>0):
@@ -203,7 +210,7 @@ def rotate(angle):
 
 	stop = f"{0}\n"
 	ser.write(stop.encode())
-	ser.close()
+	# ser.close()
 	
 
 def translate(distance):
@@ -220,10 +227,10 @@ def translate(distance):
 		return
 	#distance to time conversion
 	set_time = abs(tuning_param_trans*(5/53.014)*distance)
-	print(set_time)
+	print(f"Set Time in Translate_func: {set_time}")
 	
-	ser = serial.Serial('/dev/ttyUSB0', 9600)
-	time.sleep(2)
+	# ser = serial.Serial('/dev/ttyUSB0', 9600)
+	# time.sleep(2)
 	
 	if (distance>0):
 		val_str = "-0.5+0.5\n"
@@ -232,15 +239,20 @@ def translate(distance):
 	ser.write(val_str.encode())
 	start_time = time.time()
 	current_time = time.time()
-	#detect_obstacle()
+	#obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
+	#obstacle_detection_process.start()
+	#obstacle_detection_process.join()
 
 	while current_time-start_time < set_time and not stop_drive_event.is_set(): 
 		current_time = time.time()
+		#print(current_time-start_time)
 		#detect_obstacle()
 	
+	#obstacle_detection_process.terminate()
+
 	stop = f"{0}\n"
 	ser.write(stop.encode())
-	ser.close()
+	# ser.close()
 
 def detect_obstacle():
 	while True:
@@ -254,15 +266,20 @@ def detect_obstacle():
 			stop_drive_event.clear()	
 
 def main():
-	waypoints = [[23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,0,0,1, 1, 1], [dist_from_wall,100,0,0,0, 0, 0], [23.2,94,0,0,0, 0, 0], [23.2, 12.02, 1, 0, 1, 0, 1], [23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,0,0,1, 1, 1], [dist_from_wall,100,0,0,0, 0, 0], [23.2,94,0,0,0, 0, 0], [23.2, 12.02, 1, 0, 1, 0, 1] ]
+	dist_from_wall_B = 16
+	bin_A = [[23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,0,0,1, 1, 1], [dist_from_wall,100,0,0,0, 0, 0], [23.2,94,0,0,0, 0, 0], [23.2, 12.02, 1, 0, 1, 0, 1]] 
+	bin_B = [[23.2,94,0,0,0,0,0],[60,94,0,0,0,0,0],[60,120,0,0,1,1,1], [60,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0, 1]]
+	bin_C = [[23.2,94,0,0,0,0,0],[93,94,0,0,0,0,0],[120-dist_from_wall_B,100,0,0,0,0,1], [120-dist_from_wall_B,120,0,0,1,1,1], [120-dist_from_wall_B,100,0,0,0,0,0], [93,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0,1]]
+	waypoints = []
+    #waypoints = bin_B
 	#TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
 	location = [23.2,12.0175] #x = 23.2cm, y = 12.0175cm
 	orientation = 0 #degrees clockwise from north, we might need to use this in radians for numpy
+	
 
 	while True:
 		if len(waypoints) == 0:
-			pass
-			#run camera
+			waypoints = run_camera()
 		else:
 			#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
 			
@@ -283,10 +300,8 @@ def main():
 			#Check for the reverse and deploy flag
 			#IF REVERSE FLAG IS HIGH, ALL OTHER PROPERTIES OF THE WAYPOINTS ARE IGNORED, SO DONT PUT USEFUL COORDINATE INFO, JUST DUPLICATE THE PREVIOUS ONE
 			distance, angle = computeTrajectory(location,orientation,nextWaypoint)
-			print("Distance: ")
-			print(distance)
-			print("Angle: ")
-			print(angle)
+			print(f"Distance: {distance}")
+			print(f"Angle: {angle}")
 			#rotate heading
 			rotate(angle)
 			orientation = (orientation + angle)%360 #updating orientation. Please double check my sign here
@@ -310,13 +325,12 @@ def main():
 					# #y coordinate will always be the same when in contact with the North wall
 					# location[1] = 120-11.265
 					location[0] = nextWaypoint[0]
-					print(f"Updated X: {location[0]}")
 					location[1] = nextWaypoint[1]
-					print(f"Updated Y: {location[1]}")
 					#updating orientation
 					orientation = 180 #since we will now always be facing south
 					run_servo(servo)#deploy parcel function from servoControl.py
 					#This will be the case when deploying in bins A and C but not B
+					print(f"x: {location[0]} y: {location[1]} orientation: {orientation}")
 
 				else:
 					#At loading zone, update location
@@ -332,6 +346,9 @@ def main():
 			else:
 				#Compute trajectory of the waypoint
 				translate(distance)
+				# translate_process = multiprocessing.Process(target=translate, args = (distance,))
+				# translate_process.start()
+				# translate_process.join()
 				
 				#drive to waypoint
 				
@@ -355,7 +372,9 @@ def main():
 					location = [nextWaypoint[0],nextWaypoint[1]]
 
 			waypoints.pop(0)
-			print(waypoints)
+			print(f"Waypoints Remaining: {waypoints}")
+
+	ser.close()
 
 if __name__ == "__main__":
 		
@@ -383,7 +402,7 @@ if __name__ == "__main__":
 	#stop()
 	#reverseToLimitSwitch()
 	
-	#checkWallDistance(1)
+	#checkWallDistance(0)
 	main()
 
 
