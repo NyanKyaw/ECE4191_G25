@@ -245,6 +245,7 @@ def translate(distance):
 
 	while current_time-start_time < set_time: 
 		current_time = time.time()
+		detect_obstacle()
 		if stop_drive_event.is_set():
 			stop_time = time.time()
 			stop = f"{0}\n"
@@ -262,22 +263,21 @@ def translate(distance):
 	# ser.close()
 
 def detect_obstacle():
-	while True:
-		distance = readUltrasonic(ECHO_3)
-		if distance <= 10:
-			stop_drive_event.set()
+	distance = readUltrasonic(ECHO_3)
+	if distance <= 10:
+		stop_drive_event.set()
 
-			while distance <= 10:
-				distance = readUltrasonic(ECHO_3)
+		while distance <= 10:
+			distance = readUltrasonic(ECHO_3)
 
-			stop_drive_event.clear()	
+		stop_drive_event.clear()	
 
 def main():
 	dist_from_wall_B = 16
 	bin_A = [[23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,0,0,1, 1, 1], [dist_from_wall,100,0,0,0, 0, 0], [23.2,94,0,0,0, 0, 0], [23.2, 12.02, 1, 0, 1, 0, 1]] 
 	bin_B = [[23.2,94,0,0,0,0,0],[60,94,0,0,0,0,0],[60,120,0,0,1,1,1], [60,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0, 1]]
 	bin_C = [[23.2,94,0,0,0,0,0],[93,94,0,0,0,0,0],[120-dist_from_wall_B,100,0,0,0,0,1], [120-dist_from_wall_B,120,0,0,1,1,1], [120-dist_from_wall_B,100,0,0,0,0,0], [93,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0,1]]
-	waypoints = []
+	waypoints = bin_A
     #waypoints = bin_B
 	#TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
 	location = [23.2,12.0175] #x = 23.2cm, y = 12.0175cm
@@ -286,7 +286,8 @@ def main():
 
 	while True:
 		if len(waypoints) == 0:
-			waypoints = run_camera()
+			#waypoints = run_camera()
+			pass
 		else:
 			#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
 			
@@ -353,9 +354,6 @@ def main():
 			else:
 				#Compute trajectory of the waypoint
 				translate(distance)
-				# translate_process = multiprocessing.Process(target=translate, args = (distance,))
-				# translate_process.start()
-				# translate_process.join()
 				
 				#drive to waypoint
 				
@@ -368,7 +366,7 @@ def main():
 					#side dependant on an element of the vector
 					#use the checkDistance function
 					xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
-					location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWapoint[3])*(xr) #computes differently depending on the side that the wall is on
+					location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWaypoint[3])*(xr) #computes differently depending on the side that the wall is on
 					#y coordinate will always be the same when in contact with the South wall
 					location[1] = 11.265
 					#updating orientation
@@ -412,14 +410,16 @@ if __name__ == "__main__":
 	#reverseToLimitSwitch()
 	
 	#checkWallDistance(0)
-	obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
-	main_process = multiprocessing.Process(target=main())
 
-	obstacle_detection_process.start()
-	main_process.start()
+	main()
+	# obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
+	# main_process = multiprocessing.Process(target=main())
 
-	obstacle_detection_process.join()
-	main_process.join()
+	# obstacle_detection_process.start()
+	# main_process.start()
+
+	# obstacle_detection_process.join()
+	# main_process.join()
 
 
 
