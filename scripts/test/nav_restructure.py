@@ -267,6 +267,7 @@ def detect_obstacle():
 
 def main():
 	dist_from_wall_B = 16
+
 	bin_A = [[23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,0,0,1, 1, 1], [dist_from_wall,100,0,0,0, 0, 0], [23.2,94,0,0,0, 0, 0], [23.2, 12.02, 1, 0, 1, 0, 1]] 
 	bin_B = [[23.2,94,0,0,0,0,0],[60,94,0,0,0,0,0],[60,120,0,0,1,1,1], [60,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0, 1]]
 	bin_C = [[23.2,94,0,0,0,0,0],[93,94,0,0,0,0,0],[120-dist_from_wall_B,100,0,0,0,0,1], [120-dist_from_wall_B,120,0,0,1,1,1], [120-dist_from_wall_B,100,0,0,0,0,0], [93,94,0,0,0,0,0], [23.2,94,0,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0,1]]
@@ -380,7 +381,8 @@ if __name__ == "__main__":
 		
 	#Defining pins and constants
 	tuning_param_trans = 1
-	tuning_param_rotate = 1.01
+	#tuning_param_rotate = 1.01
+	tuning_param_rotate = 0.98
 	dist_from_wall = 18 # Can delete when camera function is brought back
 
 	#Setting up servo - this can go elsewhere if necessary
@@ -399,11 +401,11 @@ if __name__ == "__main__":
 	#Defining an empty waypoints vector
 	waypoints = []
 	stop_drive_event = multiprocessing.Event()
-	#stop()
+	stop()
 	#reverseToLimitSwitch()
 	
 	#checkWallDistance(0)
-	main()
+	#main()
 
 
 
