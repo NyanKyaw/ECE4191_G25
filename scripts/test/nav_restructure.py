@@ -86,14 +86,14 @@ def readUltrasonic(ECHO_NUM):
 	"""
 		INPUT THE PINS FOR THE CORRESPONDING ULTRASONIC SENSOR AND THIS FUNCTION WILL RETURN THE DISTANCE READING
 		"""
-	smoothing_factor = 10
+	smoothing_factor = 8
 	dist_sum = 0
 	count = 0
 	for x in range(smoothing_factor):
 		GPIO.output(TRIG_1, False)
-		time.sleep(0.1)
+		time.sleep(0.00001)
 		GPIO.output(TRIG_1, True)
-		time.sleep(0.2)
+		time.sleep(0.00002)
 		GPIO.output(TRIG_1, False)
 		while GPIO.input(ECHO_NUM)==0:
 			pulse_start=time.time()
@@ -122,9 +122,9 @@ def readUltrasonic3():
 	count = 0
 	for x in range(smoothing_factor):
 		GPIO.output(TRIG_1, False)
-		time.sleep(0.1)
+		time.sleep(0.00001)
 		GPIO.output(TRIG_1, True)
-		time.sleep(0.2)
+		time.sleep(0.00002)
 		GPIO.output(TRIG_1, False)
 		while GPIO.input(ECHO_3)==0:
 			pulse_start=time.time()
