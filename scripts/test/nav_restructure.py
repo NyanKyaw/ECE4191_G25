@@ -198,6 +198,17 @@ def translate(distance):
 	ser.write(stop.encode())
 	ser.close()
 
+def detect_obstacle():
+	while True:
+		distance = readUltrasonic(ECHO_3)
+		if distance <= 10:
+			stop_drive_event.set()
+
+			while distance <= 10:
+				distance = readUltrasonic(ECHO_3)
+
+			stop_drive_event.clear()	
+
 def main():
 	
 	#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
@@ -307,4 +318,5 @@ if __name__ == "__main__":
 
 	#Defining an empty waypoints vector
 	waypoints = []
+	stop_drive_event = multiprocessing.Event()
 	main()
