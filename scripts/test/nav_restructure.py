@@ -110,6 +110,37 @@ def readUltrasonic(ECHO_NUM):
 			# Reset values
 			count = 0
 			return dist_average
+		
+def readUltrasonic3():
+	"""
+		INPUT THE PINS FOR THE CORRESPONDING ULTRASONIC SENSOR AND THIS FUNCTION WILL RETURN THE DISTANCE READING
+		"""
+	smoothing_factor = 1
+	dist_sum = 0
+	count = 0
+	for x in range(smoothing_factor):
+		GPIO.output(TRIG_1, False)
+		time.sleep(0.1)
+		GPIO.output(TRIG_1, True)
+		time.sleep(0.2)
+		GPIO.output(TRIG_1, False)
+		while GPIO.input(ECHO_3)==0:
+			pulse_start=time.time()
+			#print(4.1)
+		while GPIO.input(ECHO_3)==1:
+			pulse_end=time.time()
+			#print(4.2)
+		pulse_duration=pulse_end-pulse_start
+		distance=pulse_duration*17150
+
+		count+=1
+		dist_sum += distance
+
+		if count == smoothing_factor:
+			dist_average = dist_sum/smoothing_factor
+			# Reset values
+			count = 0
+			return dist_average
 
 def reverseToLimitSwitch():
 	"""
