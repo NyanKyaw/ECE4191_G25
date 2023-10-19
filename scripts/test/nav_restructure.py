@@ -243,8 +243,15 @@ def translate(distance):
 	#obstacle_detection_process.start()
 	#obstacle_detection_process.join()
 
-	while current_time-start_time < set_time and not stop_drive_event.is_set(): 
+	while current_time-start_time < set_time: 
 		current_time = time.time()
+		if stop_drive_event.is_set():
+			stop_time = time.time()
+			stop = f"{0}\n"
+			ser.write(stop.encode())
+			while stop_drive_event.is_set():
+				pass
+			current_time = stop_time
 		#print(current_time-start_time)
 		#detect_obstacle()
 	
@@ -399,11 +406,20 @@ if __name__ == "__main__":
 	#Defining an empty waypoints vector
 	waypoints = []
 	stop_drive_event = multiprocessing.Event()
+	stop_drive_event.clear()
+
 	#stop()
 	#reverseToLimitSwitch()
 	
 	#checkWallDistance(0)
-	main()
+	obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
+	main_process = multiprocessing.Process(target=main())
+
+	obstacle_detection_process.start()
+	main_process.start()
+
+	obstacle_detection_process.join()
+	main_process.join()
 
 
 
