@@ -12,30 +12,6 @@ import config
 
 import numpy as np
 
-#Defining pins and constants
-GPIO.setmode(GPIO.BCM)
-LIMIT_SWITCH_1 = 23
-LIMIT_SWITCH_2 = 25
-LEVER = 22
-tuning_param_trans = 1
-tuning_param_rotate = 0.95
-dist_from_wall = 14.5 # Can delete when camera function is brought back
-
-#Setting up servo - this can go elsewhere if necessary
-servo = Servo(22)
-servo.min() #sets the servo to min on startup. can go elsewhere
-
-#Defining ultrasonic pins
-ULTRASONIC_PINS = [12,13,14,15,16] #CHANGE THESE THEY ARE RANDOM NUMBERS RIGHT NOW
-TRIGGER_PIN = 11 #ALSO A RANDOM PIN NUMBER
-#WHEN REFERRING TO ULTRASONICS IN THE REMAINDER OF THE CODE, ASSUMING THAT BACK LEFT IS ULTRASONIC 0 AND IT PROCEEDS CLOCKWISE
-
-#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
-location = [23.2,12.0175] #x = 23.2cm, y = 12.0175cm
-orientation = 0 #degrees clockwise from north, we might need to use this in radians for numpy
-
-#Defining an empty waypoints vector
-waypoints = []
 
 def pinsetup():
 	GPIO.setmode(GPIO.BCM)
@@ -83,7 +59,7 @@ def computeTrajectory(location,orientation,waypoint):
 	distanceTranslation = np.sqrt((waypoint[0]-location[0])**2 + (waypoint[1]-location[1])**2) 					
 	#Euclidian distance to the waypoint.
 	#Could probably do this ^ with np.linalg.norm if we wanted
-	angleRotation = np.degrees(np.arctan2((waypoint[0]-location[0])/(waypoint[1]-location[1])))
+	angleRotation = np.degrees(np.arctan2((waypoint[0]-location[0]),(waypoint[1]-location[1])))
 	#NOTE: We may need some sort of angle constant eg +90 to convert this to our coordinate system. Not sure
 	angleRotation = orientation - angleRotation #This gives us the angle we need to rotate
 
@@ -223,24 +199,26 @@ def translate(distance):
 	ser.close()
 
 def main():
-	pinsetup()
+	
+	#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
+	location = [23.2,12.0175] #x = 23.2cm, y = 12.0175cm
+	orientation = 0 #degrees clockwise from north, we might need to use this in radians for numpy
+
+	#Defining an empty waypoints vector
+	waypoints = []
+	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
 	#while no waypoints, check the camera	
 
 	# For now ommitted until QT depencies on mine
 	# while(len(waypoints) == 0):
 	# 	goal = run_camera()
-	waypoints = [[23.2,94,0,0,0,0],[dist_from_wall,100,0,0,0,0],[dist_from_wall,120,1,1,1], [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
+	waypoints = [[23.2,94,0,0,0,0],[dist_from_wall,100,0,0,0,0]]#[dist_from_wall,120,1,1,1], [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
 	
 
 	# #Read first waypoint
-	# nextWaypoint = waypoints[0] #should be a row vector of length 5
-	# #print(nextWaypoint)
-	print("Waypoint")
-	print(waypoints)
-	waypoints = np.delete(waypoints, 0)
-	print("")
-	print(waypoints)
-"""
+	nextWaypoint = waypoints[0] #should be a row vector of length 5
+
+
 	#Check for the reverse and deploy flag
 	#IF REVERSE FLAG IS HIGH, ALL OTHER PROPERTIES OF THE WAYPOINTS ARE IGNORED, SO DONT PUT USEFUL COORDINATE INFO, JUST DUPLICATE THE PREVIOUS ONE
 	if(nextWaypoint[4]==1):
@@ -263,19 +241,23 @@ def main():
 			deployParcel(servo) #deploy parcel function from servoControl.py
 
 		elif (nextWaypoint[2]==1 and nextWaypoint[5]==0):
-			break
+			pass
 		
 	
 
-	elif(nextWaypoint[4]==0)
+	elif(nextWaypoint[4]==0):
 		#Compute trajectory of the waypoint
 		distance, angle = computeTrajectory(location,orientation,nextWaypoint)
+		print(distance)
+		print(angle)
+		translate(distance)
+
 		#rotate heading
 		rotate(angle)
 		orientation = orientation + angle #updating orientation. Please double check my sign here
 		time.sleep(1) #might not need
 		#drive to waypoint
-		translate(distance)
+		
 
 		#conditional location update
 		#if the calibrate flag is high, meaning we can measure using ultrasonics
@@ -292,18 +274,37 @@ def main():
 			orientation = 0 #since we will now always be facing north
 		
 		#if not update the current location to be the waypoint
-		else:
+		elif(nextWaypoint[2]==0):
 			location = [nextWaypoint[0],nextWaypoint[1]]
 
 			#remove waypoint from list
-			waypoints = np.delete(waypoints, 0) #deletes the 0th waypoint
-	
-"""
+			waypoints.pop(0) #deletes the 0th waypoint
+
+
 if __name__ == "__main__":
-	#while True:
-	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
-	#main()
-	dist_average_1 = readUltrasonic(ECHO_4)
-	dist_average_2 = readUltrasonic(ECHO_5)
-	
-	print((dist_average_1+dist_average_2)/2)
+		
+	#Defining pins and constants
+	GPIO.setmode(GPIO.BCM)
+	LIMIT_SWITCH_1 = 23
+	LIMIT_SWITCH_2 = 25
+	LEVER = 22
+	tuning_param_trans = 1
+	tuning_param_rotate = 0.95
+	dist_from_wall = 14.5 # Can delete when camera function is brought back
+
+	#Setting up servo - this can go elsewhere if necessary
+	servo = Servo(22)
+	servo.min() #sets the servo to min on startup. can go elsewhere
+
+	#Defining ultrasonic pins
+	ULTRASONIC_PINS = [12,13,14,15,16] #CHANGE THESE THEY ARE RANDOM NUMBERS RIGHT NOW
+	TRIGGER_PIN = 11 #ALSO A RANDOM PIN NUMBER
+	#WHEN REFERRING TO ULTRASONICS IN THE REMAINDER OF THE CODE, ASSUMING THAT BACK LEFT IS ULTRASONIC 0 AND IT PROCEEDS CLOCKWISE
+
+	#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
+	location = [23.2,12.0175] #x = 23.2cm, y = 12.0175cm
+	orientation = 0 #degrees clockwise from north, we might need to use this in radians for numpy
+
+	#Defining an empty waypoints vector
+	waypoints = []
+	main()
