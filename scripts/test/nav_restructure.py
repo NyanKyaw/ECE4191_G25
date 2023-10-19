@@ -296,7 +296,7 @@ def translate(distance):
 	# ser.close()
 
 def detect_obstacle():
-	distance = readUltrasonic(ECHO_3)
+	distance = readUltrasonic3(ECHO_3)
 	if distance <= 10:
 		print("OBSTACLE DETECTED")
 		#stop_drive_event.set()
@@ -306,7 +306,7 @@ def detect_obstacle():
 
 		while distance <= 10:
 			print(f"US 3 distance: {distance}")
-			distance = readUltrasonic(ECHO_3)
+			distance = readUltrasonic3(ECHO_3)
 		return stop_time
 		#stop_drive_event.clear()	
 	return None
