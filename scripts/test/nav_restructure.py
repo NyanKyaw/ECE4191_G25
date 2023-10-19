@@ -245,9 +245,11 @@ def translate(distance):
 	delay_time = 0
 	while current_time-start_time < set_time + delay_time: 
 		current_time = time.time()
+		"""
 		stop_time = detect_obstacle()
 		if stop_time is not None:
 			delay_time = time.time() - stop_time
+		"""
 		# #if stop_drive_event.is_set():
 		# 	stop_time = time.time()
 		# 	stop = f"{0}\n"
@@ -415,12 +417,12 @@ if __name__ == "__main__":
 	stop_drive_event = multiprocessing.Event()
 	stop_drive_event.clear()
 
-	stop()
+	#stop()
 	#reverseToLimitSwitch()
 	
 	#checkWallDistance(0)
 
-	#main()
+	main()
 	# obstacle_detection_process = multiprocessing.Process(target=detect_obstacle())
 	# main_process = multiprocessing.Process(target=main())
 
