@@ -3,7 +3,7 @@ import cv2
 
 # set variables
 # distance from wall
-dist_from_wall = 14.5
+dist_from_wall = 16
 
 def readimage(camera, detector, goal):
     while camera.isOpened(): #while loop runs as long as webcam is running

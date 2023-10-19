@@ -56,12 +56,23 @@ def pinsetup():
 	return TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2
 
 def computeTrajectory(location,orientation,waypoint):
-	distanceTranslation = np.sqrt((waypoint[0]-location[0])**2 + (waypoint[1]-location[1])**2) 					
+	distanceTranslation = np.sqrt((waypoint[0]-location[0])**2 + (waypoint[1]-location[1])**2)*np.power(-1,waypoint[6])			
 	#Euclidian distance to the waypoint.
 	#Could probably do this ^ with np.linalg.norm if we wanted
-	angleRotation = np.degrees(np.arctan2((waypoint[0]-location[0]),(waypoint[1]-location[1])))
+	print("location")
+	print(location)
+	print("\n")
+	print(orientation)
+	print("x: ")
+	print(waypoint[0])
+	print("y: ")
+	print(waypoint[1])
+	print("angles: ")
+	print( np.degrees(np.arctan2((waypoint[0]-location[0]),(waypoint[1]-location[1]))))
+	angleRotation = np.degrees(np.arctan2((waypoint[0]-location[0]),(waypoint[1]-location[1]))) +180*waypoint[6]
+	print(angleRotation)
 	#NOTE: We may need some sort of angle constant eg +90 to convert this to our coordinate system. Not sure
-	angleRotation = orientation - angleRotation #This gives us the angle we need to rotate
+	angleRotation = orientation + angleRotation #This gives us the angle we need to rotate
 
 	return distanceTranslation, angleRotation
 
@@ -151,6 +162,9 @@ def rotate(angle):
 	Returns:
 		None
 	"""
+	if angle == 0:
+		return
+
 	ser = serial.Serial('/dev/ttyUSB0', 9600)
 	time.sleep(2)
 	set_time = abs(tuning_param_rotate*(5.14/360)*abs(angle))
@@ -178,7 +192,8 @@ def translate(distance):
 	Returns:
 		None
 	"""
-	
+	if distance == 0:
+		return
 	#distance to time conversion
 	set_time = abs(tuning_param_trans*(5/53.014)*distance)
 	print(set_time)
@@ -191,8 +206,13 @@ def translate(distance):
 	elif (distance<0):
 		val_str = "+0.5-0.5\n"
 	ser.write(val_str.encode())
+	start_time = time.time()
+	current_time = time.time()
+	#detect_obstacle()
 
-	update_velocities(set_time=set_time)
+	while current_time-start_time < set_time and not stop_drive_event.is_set(): 
+		current_time = time.time()
+		#detect_obstacle()
 	
 	stop = f"{0}\n"
 	ser.write(stop.encode())
@@ -210,87 +230,97 @@ def detect_obstacle():
 			stop_drive_event.clear()	
 
 def main():
-	
-	#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
+	waypoints = []
+	waypoints = [[23.2,94,0,0,0,0,0],[dist_from_wall,100,0,0,0,0, 1], [dist_from_wall,120,1,1,1]]# [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
+	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
 	location = [23.2,12.0175] #x = 23.2cm, y = 12.0175cm
 	orientation = 0 #degrees clockwise from north, we might need to use this in radians for numpy
 
-	#Defining an empty waypoints vector
-	waypoints = []
-	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
-	#while no waypoints, check the camera	
-
-	# For now ommitted until QT depencies on mine
-	# while(len(waypoints) == 0):
-	# 	goal = run_camera()
-	waypoints = [[23.2,94,0,0,0,0],[dist_from_wall,100,0,0,0,0]]#[dist_from_wall,120,1,1,1], [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
-	
-
-	# #Read first waypoint
-	nextWaypoint = waypoints[0] #should be a row vector of length 5
-
-
-	#Check for the reverse and deploy flag
-	#IF REVERSE FLAG IS HIGH, ALL OTHER PROPERTIES OF THE WAYPOINTS ARE IGNORED, SO DONT PUT USEFUL COORDINATE INFO, JUST DUPLICATE THE PREVIOUS ONE
-	if(nextWaypoint[4]==1):
-		reverseToLimitSwitch()
-		waypoints = np.delete(waypoints, 0) #deletes the 0th waypoint
-
-		#Checking if the calibrate flag is high, meaning we can use the ultrasonics to update the position
-		if(nextWaypoint[2]==1 and nextWaypoint[5]==1):
-				#check wall distance and update the robots X coordinate
-				xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
-				location[0] =  (nextWaypoint[3])*(xr) + (1-nextWapoint[3])*(120-xr) #computes differently depending on the side that the wall is on
-				#y coordinate will always be the same when in contact with the North wall
-				location[1] = 120-11.265
-				#updating orientation
-				orientation = 180 #since we will now always be facing south
-
-				deployParcel(servo) #deploy parcel function from servoControl.py
-				#This will be the case when deploying in bins A and C but not B
-		elif (nextWaypoint[2]==1 and nextWaypoint[5]==1): # at Bin B
-			deployParcel(servo) #deploy parcel function from servoControl.py
-
-		elif (nextWaypoint[2]==1 and nextWaypoint[5]==0):
+	while True:
+		if len(waypoints) == 0:
 			pass
-		
-	
+			#run camera
+		else:
+			#Defining a temporary location variable - this can be located somewhere else or in another class just putting it here so it's easy to read
+			
+			#Defining an empty waypoints vector
+			
+			
+			#while no waypoints, check the camera	
 
-	elif(nextWaypoint[4]==0):
-		#Compute trajectory of the waypoint
-		distance, angle = computeTrajectory(location,orientation,nextWaypoint)
-		print(distance)
-		print(angle)
-		translate(distance)
+			# For now ommitted until QT depencies on mine
+			# while(len(waypoints) == 0):
+			# 	goal = run_camera()
+			
 
-		#rotate heading
-		rotate(angle)
-		orientation = orientation + angle #updating orientation. Please double check my sign here
-		time.sleep(1) #might not need
-		#drive to waypoint
-		
+			# #Read first waypoint
+			nextWaypoint = waypoints[0] #should be a row vector of length 5
 
-		#conditional location update
-		#if the calibrate flag is high, meaning we can measure using ultrasonics
-		#note that since we handle the reverse and deploy seperately, if we can measure here, it will always be on the south
-		#side of the arena
-		if(nextWaypoint[2]==1):
-			#side dependant on an element of the vector
-			#use the checkDistance function
-			xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
-			location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWapoint[3])*(xr) #computes differently depending on the side that the wall is on
-			#y coordinate will always be the same when in contact with the South wall
-			location[1] = 11.265
-			#updating orientation
-			orientation = 0 #since we will now always be facing north
-		
-		#if not update the current location to be the waypoint
-		elif(nextWaypoint[2]==0):
-			location = [nextWaypoint[0],nextWaypoint[1]]
 
-			#remove waypoint from list
-			waypoints.pop(0) #deletes the 0th waypoint
+			#Check for the reverse and deploy flag
+			#IF REVERSE FLAG IS HIGH, ALL OTHER PROPERTIES OF THE WAYPOINTS ARE IGNORED, SO DONT PUT USEFUL COORDINATE INFO, JUST DUPLICATE THE PREVIOUS ONE
+			if(nextWaypoint[4]==1):
+				reverseToLimitSwitch()
+				waypoints = np.delete(waypoints, 0) #deletes the 0th waypoint
 
+				#Depending on if we have reversed into the south or north wall, we may deploy, and how we update position changes
+				if(nextWaypoint[5]==1):
+					#check wall distance and update the robots X coordinate
+					xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
+					location[0] =  (nextWaypoint[3])*(xr) + (1-nextWapoint[3])*(120-xr) #computes differently depending on the side that the wall is on
+					#y coordinate will always be the same when in contact with the North wall
+					location[1] = 120-11.265
+					#updating orientation
+					orientation = 180 #since we will now always be facing south
+					deployParcel(servo) #deploy parcel function from servoControl.py
+					#This will be the case when deploying in bins A and C but not B
+
+				else:
+					#At loading zone, update location
+					xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
+					location[0] =  (1-nextWaypoint[3])*(xr) + (nextWapoint[3])*(120-xr) #computes differently depending on the side that the wall is on
+					#y coordinate will always be the same when in contact with the North wall
+					location[1] = 11.265
+					orientation = 0
+				
+			
+
+			else:
+				#Compute trajectory of the waypoint
+				distance, angle = computeTrajectory(location,orientation,nextWaypoint)
+				print(distance)
+				print(angle)
+				
+
+				#rotate heading
+				rotate(angle)
+				orientation = (orientation + angle)%360 #updating orientation. Please double check my sign here
+				time.sleep(1) #might not need
+				translate(distance)
+				
+				#drive to waypoint
+				
+
+				#conditional location update
+				#if the calibrate flag is high, meaning we can measure using ultrasonics
+				#note that since we handle the reverse and deploy seperately, if we can measure here, it will always be on the south
+				#side of the arena
+				if(nextWaypoint[2]==1):
+					#side dependant on an element of the vector
+					#use the checkDistance function
+					xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
+					location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWapoint[3])*(xr) #computes differently depending on the side that the wall is on
+					#y coordinate will always be the same when in contact with the South wall
+					location[1] = 11.265
+					#updating orientation
+					orientation = 0 #since we will now always be facing north
+				
+				#if not update the current location to be the waypoint
+				elif(nextWaypoint[2]==0):
+					location = [nextWaypoint[0],nextWaypoint[1]]
+
+		waypoints.pop(0)
+		print(waypoints)
 
 if __name__ == "__main__":
 		
@@ -301,7 +331,7 @@ if __name__ == "__main__":
 	LEVER = 22
 	tuning_param_trans = 1
 	tuning_param_rotate = 0.95
-	dist_from_wall = 14.5 # Can delete when camera function is brought back
+	dist_from_wall = 16 + 10.375 # Can delete when camera function is brought back
 
 	#Setting up servo - this can go elsewhere if necessary
 	servo = Servo(22)
@@ -319,4 +349,6 @@ if __name__ == "__main__":
 	#Defining an empty waypoints vector
 	waypoints = []
 	stop_drive_event = multiprocessing.Event()
-	main()
+	stop()
+	#main()
+	#translate(20)
