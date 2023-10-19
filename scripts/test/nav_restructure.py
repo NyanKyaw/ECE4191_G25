@@ -222,6 +222,17 @@ def translate(distance):
 	ser.write(stop.encode())
 	ser.close()
 
+def detect_obstacle():
+	while True:
+		distance = readUltrasonic(ECHO_3)
+		if distance <= 10:
+			stop_drive_event.set()
+
+			while distance <= 10:
+				distance = readUltrasonic(ECHO_3)
+
+			stop_drive_event.clear()	
+
 def main():
 	pinsetup()
 	#while no waypoints, check the camera	
@@ -302,6 +313,7 @@ def main():
 if __name__ == "__main__":
 	#while True:
 	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
+	stop_drive_event = multiprocessing.Event()
 	#main()
 	dist_average_1 = readUltrasonic(ECHO_4)
 	dist_average_2 = readUltrasonic(ECHO_5)
