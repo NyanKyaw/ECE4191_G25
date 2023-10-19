@@ -6,7 +6,8 @@ def readimage(camera, detector):
         success, img = camera.read() #store label in 'img' variable
         value, points, qrcode = detector.detectAndDecode(img)
         value = str(value)
-        cv2.imshow('img', img)
+        print("Camera is operating")
+        #cv2.imshow('img', img)
         if value != "": #if QR code is detected and it's not empty, then extract points
             camera.release()
             if value == "Location A" or value == "Location A\n":
@@ -26,7 +27,7 @@ def readimage(camera, detector):
             break
             
     camera.release()
-    cv2.destroyAllWindows()
+    #cv2.destroyAllWindows()
     return goal
     
 def run_camera():

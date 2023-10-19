@@ -56,8 +56,7 @@ def ultrasonic_1():
 
 		if count == smoothing_factor:
 			dist_1_average = dist_1_sum/smoothing_factor
-			print(list_1)
-			list_1 = []
+
 			# Reset values
 			count = 0
 			return dist_1_average
@@ -87,8 +86,6 @@ def ultrasonic_2():
 
 		if count == smoothing_factor:
 			dist_2_average = dist_2_sum/smoothing_factor
-			print(list_2)
-			list_2 = []
 			# Reset values
 			count = 0
 			return dist_2_average
@@ -119,8 +116,6 @@ def ultrasonic_3():
 
 		if count == smoothing_factor:
 			dist_3_average = dist_3_sum/smoothing_factor
-			print(list_3)
-			list_3 = []
 			# Reset values
 			count = 0
 			return dist_3_average
@@ -153,8 +148,6 @@ def ultrasonic_4():
 
 		if count == smoothing_factor:
 			dist_4_average = dist_4_sum/smoothing_factor
-			print(list_4)
-			list_4 = []
 			# Reset values
 			count = 0
 			return dist_4_average
@@ -192,24 +185,12 @@ def ultrasonic_5():
 
 if __name__ == "__main__":
 	print("Running")
-	# print(ultrasonic_1())
-	# print("\n")
-	# print(ultrasonic_2())
 
-	print(ultrasonic_3())
-	#dist_2_average = 
-	#dist_3_average = ultrasonic_3()
-	#dist_4_average = ultrasonic_4()
-	#dist_5_average = ultrasonic_5()
-	#print("\nDist1: ")
-	#print(dist_1_average)
-	#print("\nDist2: ")
-	#print(dist_2_average)
-	#print("\nDist3: ")
-	#print(dist_3_average)
-	#print("\nDist4: ")
-	#print(dist_4_average)
-	#print("\nDist5: ")
-	#print(dist_5_average)
+	print(f"US 1: {ultrasonic_1()}\n")
+	print(f"US 2: {ultrasonic_2()}\n")
+	print(f"US 3: {ultrasonic_3()}\n")
+	print(f"US 4: {ultrasonic_4()}\n")
+	print(f"US 5: {ultrasonic_5()}\n")
+
 	
 
