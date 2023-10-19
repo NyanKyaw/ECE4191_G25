@@ -4,7 +4,7 @@
 import RPi.GPIO as GPIO
 from gpiozero import Servo
 from servoTest import run_servo
-from parceldetector import run_camera
+from parceldetector_restructure import run_camera
 import serial
 import time
 import multiprocessing
@@ -19,6 +19,7 @@ LIMIT_SWITCH_2 = 25
 LEVER = 22
 tuning_param_trans = 1
 tuning_param_rotate = 0.95
+dist_from_wall = 14.5 # Can delete when camera function is brought back
 
 #Setting up servo - this can go elsewhere if necessary
 servo = Servo(22)
@@ -45,6 +46,39 @@ def pinsetup():
 	ls_state_1 = GPIO.input(LIMIT_SWITCH_1)
 	ls_state_2 = GPIO.input(LIMIT_SWITCH_2)
 
+	# Ultrasonic set up
+	GPIO.setwarnings(False)
+
+	#Ultrasonic Sensor No. 1 - Side left
+	TRIG_1 = 27
+	ECHO_1 = 2
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(TRIG_1, GPIO.OUT)
+	GPIO.setup(ECHO_1, GPIO.IN)
+
+	#Ultrasonic Sensor No. 2 - Front left
+	ECHO_2 = 3
+
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(ECHO_2, GPIO.IN)
+
+	#Ultrasonic Sensor No. 3 - Front centre
+	ECHO_3 = 4
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(ECHO_3, GPIO.IN)
+
+	#Ultrasonic Sensor No. 4 - Front right
+	ECHO_4 = 17
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(ECHO_4, GPIO.IN)
+
+	#Ultrasonic Sensor No. 5- Side right
+	ECHO_5 = 24
+	GPIO.setmode(GPIO.BCM)
+	GPIO.setup(ECHO_5, GPIO.IN)
+
+	return TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2
+
 def computeTrajectory(location,orientation,waypoint):
 	distanceTranslation = np.sqrt((waypoint[0]-location[0])**2 + (waypoint[1]-location[1])**2) 					
 	#Euclidian distance to the waypoint.
@@ -55,37 +89,35 @@ def computeTrajectory(location,orientation,waypoint):
 
 	return distanceTranslation, angleRotation
 
-def readUltrasonic():
+def readUltrasonic(ECHO_NUM):
 	"""
 		INPUT THE PINS FOR THE CORRESPONDING ULTRASONIC SENSOR AND THIS FUNCTION WILL RETURN THE DISTANCE READING
 		"""
+	smoothing_factor = 10
 	dist_sum = 0
 	count = 0
-	while True:	
+	for x in range(smoothing_factor):
 		GPIO.output(TRIG_1, False)
 		time.sleep(0.1)
 		GPIO.output(TRIG_1, True)
 		time.sleep(0.2)
 		GPIO.output(TRIG_1, False)
-		while GPIO.input(ECHO_5)==0:
+		while GPIO.input(ECHO_NUM)==0:
 			pulse_start=time.time()
-			print(5.1)
-		while GPIO.input(ECHO_5)==1:
+			#print(4.1)
+		while GPIO.input(ECHO_NUM)==1:
 			pulse_end=time.time()
-			print(5.2)
+			#print(4.2)
 		pulse_duration=pulse_end-pulse_start
 		distance=pulse_duration*17150
 
-		for x in range(32000):
-			count+=1
-			dist_sum += distance
+		count+=1
+		dist_sum += distance
 
-		if count == 32000:
-			dist_average = dist_sum/32000
-			
+		if count == smoothing_factor:
+			dist_average = dist_sum/smoothing_factor
 			# Reset values
 			count = 0
-			dist_sum=0
 			return dist_average
 
 def reverseToLimitSwitch():
@@ -194,34 +226,48 @@ def main():
 	pinsetup()
 	#while no waypoints, check the camera	
 
-	while(len(waypoints) == 0):
-		run_camera()
-		
-	#Read first waypoint
-	nextWaypoint = waypoints[0] #should be a row vector of length 5
-	print(nextWaypoint)
-"""
-	    #Check for the reverse and deploy flag
-	    #IF REVERSE FLAG IS HIGH, ALL OTHER PROPERTIES OF THE WAYPOINTS ARE IGNORED, SO DONT PUT USEFUL COORDINATE INFO, JUST DUPLICATE THE PREVIOUS ONE
-	    if(nextWaypoint[4]==1):
-		reverseToLimitSwitch()
-		deployParcel(servo) #deploy parcel function from servoControl.py
-		
-		#Checking if the ultrasonic flag is high, meaning we can use the ultrasonics to update the position
-		#This will be the case when deploying in bins A and C but not B
-		if(nextWaypoint[2]==1):
-		    #check wall distance and update the robots X coordinate
-		    xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
-		    location[0] =  (nextWaypoint[3])*(xr) + (1-nextWapoint[3])*(120-xr) #computes differently depending on the side that the wall is on
-		    #y coordinate will always be the same when in contact with the North wall
-		    location[1] = 120-11.265
-		    #updating orientation
-		    orientation = 180 #since we will now always be facing south
+	# For now ommitted until QT depencies on mine
+	# while(len(waypoints) == 0):
+	# 	goal = run_camera()
+	waypoints = [[23.2,94,0,0,0,0],[dist_from_wall,100,0,0,0,0],[dist_from_wall,120,1,1,1], [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
+	
 
-		#Removing the reverse and deploy waypoint from the list
+	# #Read first waypoint
+	# nextWaypoint = waypoints[0] #should be a row vector of length 5
+	# #print(nextWaypoint)
+	print("Waypoint")
+	print(waypoints)
+	waypoints = np.delete(waypoints, 0)
+	print("")
+	print(waypoints)
+"""
+	#Check for the reverse and deploy flag
+	#IF REVERSE FLAG IS HIGH, ALL OTHER PROPERTIES OF THE WAYPOINTS ARE IGNORED, SO DONT PUT USEFUL COORDINATE INFO, JUST DUPLICATE THE PREVIOUS ONE
+	if(nextWaypoint[4]==1):
+		reverseToLimitSwitch()
 		waypoints = np.delete(waypoints, 0) #deletes the 0th waypoint
 
-	    else:
+		#Checking if the calibrate flag is high, meaning we can use the ultrasonics to update the position
+		if(nextWaypoint[2]==1 and nextWaypoint[5]==1):
+				#check wall distance and update the robots X coordinate
+				xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
+				location[0] =  (nextWaypoint[3])*(xr) + (1-nextWapoint[3])*(120-xr) #computes differently depending on the side that the wall is on
+				#y coordinate will always be the same when in contact with the North wall
+				location[1] = 120-11.265
+				#updating orientation
+				orientation = 180 #since we will now always be facing south
+
+				deployParcel(servo) #deploy parcel function from servoControl.py
+				#This will be the case when deploying in bins A and C but not B
+		elif (nextWaypoint[2]==1 and nextWaypoint[5]==1): # at Bin B
+			deployParcel(servo) #deploy parcel function from servoControl.py
+
+		elif (nextWaypoint[2]==1 and nextWaypoint[5]==0):
+			break
+		
+	
+
+	elif(nextWaypoint[4]==0)
 		#Compute trajectory of the waypoint
 		distance, angle = computeTrajectory(location,orientation,nextWaypoint)
 		#rotate heading
@@ -232,27 +278,32 @@ def main():
 		translate(distance)
 
 		#conditional location update
-		#if the ultrasonic flag is high, meaning we can measure using ultrasonics
+		#if the calibrate flag is high, meaning we can measure using ultrasonics
 		#note that since we handle the reverse and deploy seperately, if we can measure here, it will always be on the south
 		#side of the arena
 		if(nextWaypoint[2]==1):
-		    #side dependant on an element of the vector
-		    #use the checkDistance function
-		    xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
-		    location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWapoint[3])*(xr) #computes differently depending on the side that the wall is on
-		    #y coordinate will always be the same when in contact with the South wall
-		    location[1] = 11.265
-		    #updating orientation
-		    orientation = 0 #since we will now always be facing north
+			#side dependant on an element of the vector
+			#use the checkDistance function
+			xr = 10.375 + checkWallDistance(nextWaypoint[3]) #the distance from the center of the robot to the wall
+			location[0] =  (nextWaypoint[3])*(120-xr) + (1-nextWapoint[3])*(xr) #computes differently depending on the side that the wall is on
+			#y coordinate will always be the same when in contact with the South wall
+			location[1] = 11.265
+			#updating orientation
+			orientation = 0 #since we will now always be facing north
 		
 		#if not update the current location to be the waypoint
 		else:
-		    location = [nextWaypoint[0],nextWaypoint[1]]
+			location = [nextWaypoint[0],nextWaypoint[1]]
 
-		#remove waypoint from list
-		waypoints = np.delete(waypoints, 0) #deletes the 0th waypoint
-		"""
-
+			#remove waypoint from list
+			waypoints = np.delete(waypoints, 0) #deletes the 0th waypoint
+	
+"""
 if __name__ == "__main__":
-	while True:
-		main()
+	#while True:
+	TRIG_1, ECHO_1, ECHO_2, ECHO_3, ECHO_4, ECHO_5, ls_state_1, ls_state_2 = pinsetup()
+	#main()
+	dist_average_1 = readUltrasonic(ECHO_4)
+	dist_average_2 = readUltrasonic(ECHO_5)
+	
+	print((dist_average_1+dist_average_2)/2)

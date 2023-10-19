@@ -5,8 +5,7 @@ import cv2
 # distance from wall
 dist_from_wall = 14.5
 
-def readimage(camera, detector):
-    goal = None
+def readimage(camera, detector, goal):
     while camera.isOpened(): #while loop runs as long as webcam is running
         success, img = camera.read() #store label in 'img' variable
         value, points, qrcode = detector.detectAndDecode(img)
@@ -15,11 +14,11 @@ def readimage(camera, detector):
         if value != "": #if QR code is detected and it's not empty, then extract points
             camera.release()
             if value == "Location A" or value == "Location A\n":
-                goal = [[23.2,94,0,0,0,0],[dist_from_wall,100,0,0,0,0],[dist_from_wall,120,1,1,1], [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 1]]
+                goal = [[23.2,94,0,0,0,0],[dist_from_wall,100,0,0,0,0],[dist_from_wall,120,1,1,1], [dist_from_wall,100,0,0,1], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
                 #Goal formatting here is:
-                #[X,Y,UltrasonicFlag,Side,ReverseFlag. DeployFlag]
+                #[X,Y,CalibrateFlag,Side,ReverseFlag. DeployFlag]
                 #X and Y are waypoint coordinates
-                #UltrasonicFlag is 1 if ultrasonics can be used at that waypoint to check location
+                #CalibrateFlag is 1 if ultrasonics can be used at that waypoint to check location
                 #Side is the side to take a measurement from if the ultrasonics can be used. 0 is left, 1 is right
                 #Reverse flag is 1 if a reverse until limit switch 
                 #Deploy flag is 1 is lever needs to be deployed at waypoint
@@ -28,10 +27,10 @@ def readimage(camera, detector):
                 #waypoint will be ignored, so duplicate the previous waypoint
                 print(goal)
             elif value == "Location B" or value == "Location B\n":
-                #goal = #some goal matrix
+                goal = [[23.2,94,0,0,0,0],[60,94,0,0,0,0],[60,120,0,1,1], [60,94,0,0,0], [23.2,94,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
                 print(goal)
             elif value == "Location C" or value == "Location C\n":
-               # goal = #some goal matrix
+                goal = [[23.2,94,0,0,0,0],[93,94,0,0,0,0],[120-dist_from_wall,100,1,1,1], [120-dist_from_wall,120,1,1,1,1], [120-dist_from_wall,100,1,1,1], [23.2,94,0,0,0,0],[93,94,0,0,0,0], [23.2, 12.02, 1, 0, 1, 0]]
                 print(goal)
             else: # if not one of the values we expect, keep reading 
                 continue
@@ -50,7 +49,7 @@ def run_camera():
 	goal = None
 
 	while goal == None: # infinite loop
-		goal = readimage(detector=detector, camera=camera) # this function has its own while loop that will run infinitely until qr is detected
+		goal = readimage(detector=detector, camera=camera, goal = goal) # this function has its own while loop that will run infinitely until qr is detected
 			
 	return goal
 
